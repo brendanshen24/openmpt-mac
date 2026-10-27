@@ -15,6 +15,8 @@
 #include "Mptrack.h"
 #include "MPTrackUtil.h"
 #include "TrackerSettings.h"
+#include "../common/ComponentManager.h"
+#include "../common/mptCPU.h"
 #include "mpt/format/join.hpp"
 #include "mpt/string/utility.hpp"
 #include "resource.h"

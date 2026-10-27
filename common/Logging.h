@@ -141,7 +141,7 @@ public:
 
 
 
-#if defined(MODPLUG_TRACKER) && MPT_OS_WINDOWS
+#if defined(MODPLUG_TRACKER)
 
 namespace Trace {
 

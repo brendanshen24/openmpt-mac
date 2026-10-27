@@ -120,7 +120,10 @@ void CViewPattern::UpdateVisibileColumns(std::bitset<PatternCursor::numColumns> 
 
 bool CViewPattern::UpdateSizes()
 {
+	if(!PatternFont::currentFont)
+		PatternFont::UpdateFont(m_hWnd);
 	const PATTERNFONT *pfnt = PatternFont::currentFont;
+	if(!pfnt) return false;
 	int oldx = m_szCell.cx, oldy = m_szCell.cy;
 	m_szHeader.cx = ROWHDR_WIDTH;
 	m_szHeader.cy = COLHDR_HEIGHT;

@@ -18,6 +18,18 @@
 #include <cmath>
 #include <execution>
 #include <numeric>
+#if defined(_LIBCPP_VERSION)
+namespace std {
+namespace execution {
+struct parallel_unsequenced_policy {};
+inline constexpr parallel_unsequenced_policy par_unseq{};
+}
+template <typename InputIt, typename T, typename BinaryOp, typename UnaryOp>
+inline T transform_reduce(std::execution::parallel_unsequenced_policy, InputIt first, InputIt last, T init, BinaryOp binop, UnaryOp unaryop) {
+    return std::transform_reduce(first, last, init, binop, unaryop);
+}
+}
+#endif
 #if defined(MPT_WANT_ARCH_INTRINSICS_X86_SSE2) && defined(MPT_ARCH_INTRINSICS_X86_SSE2)
 #if MPT_COMPILER_MSVC
 #include <intrin.h>

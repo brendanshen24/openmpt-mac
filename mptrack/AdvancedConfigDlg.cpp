@@ -249,7 +249,7 @@ BOOL COptionsAdvanced::OnSetActive()
 
 COLORREF CAdvancedSettingsList::OnGetCellBkColor(int nRow, int /* nColumn */ )
 {
-	const bool isDefault = theApp.GetSettings().GetMap().find(m_indexToPath[GetItemData(nRow)])->second.IsDefault();
+	const bool isDefault = theApp.GetSettings().GetMap().find(m_indexToPath[GetItemData(nRow)])->second->IsDefault();
 	COLORREF defColor = GetBkColor();
 	COLORREF txtColor = GetTextColor();
 	COLORREF modColor = RGB(GetRValue(defColor) * 0.9 + GetRValue(txtColor) * 0.1, GetGValue(defColor) * 0.9 + GetGValue(txtColor) * 0.1, GetBValue(defColor) * 0.9 + GetBValue(txtColor) * 0.1);

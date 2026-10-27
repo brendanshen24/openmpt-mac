@@ -204,7 +204,7 @@ namespace Util
 
 
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 
 template <typename Tstring, typename Tbuf, typename Tsize>
 Tstring ParseMaybeNullTerminatedStringFromBufferWithSizeInBytes(const Tbuf *buf, Tsize sizeBytes)

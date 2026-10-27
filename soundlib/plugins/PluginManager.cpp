@@ -372,6 +372,7 @@ void CVstPluginManager::EnumerateDirectXDMOs()
 		"A8122FF4-9E52-4374-B3D9-B4063E77109D"_uuid, // XnaVisualizerDmo (not usable)
 	};
 
+#if MPT_OS_WINDOWS
 	HKEY hkEnum;
 	TCHAR keyname[128];
 
@@ -413,6 +414,7 @@ void CVstPluginManager::EnumerateDirectXDMOs()
 		index++;
 	}
 	if (hkEnum) RegCloseKey(hkEnum);
+#endif // MPT_OS_WINDOWS
 #endif // MPT_WITH_DMO
 }
 

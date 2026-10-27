@@ -185,6 +185,16 @@ inline span<const T> as_span(const std::array<T, N> & cont) {
 	return span<const T>(cont);
 }
 
+template <typename Cont, typename = std::void_t<decltype(std::declval<Cont>().data()), decltype(std::declval<Cont>().size())>>
+inline auto as_span(Cont & cont) -> span<typename Cont::value_type> {
+	return span<typename Cont::value_type>(cont.data(), cont.size());
+}
+
+template <typename Cont, typename = std::void_t<decltype(std::declval<const Cont>().data()), decltype(std::declval<const Cont>().size())>>
+inline auto as_span(const Cont & cont) -> span<const typename Cont::value_type> {
+	return span<const typename Cont::value_type>(cont.data(), cont.size());
+}
+
 template <typename Ca, typename Cb>
 bool span_elements_equal(const Ca & a, const Cb & b) {
 	return a.size() == b.size() && (a.data() == b.data() || std::equal(a.begin(), a.end(), b.begin()));

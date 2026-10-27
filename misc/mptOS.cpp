@@ -192,7 +192,7 @@ mpt::osinfo::windows::Version Version::GetMinimumAPILevel() noexcept
 }
 
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 
 
 #ifndef PROCESSOR_ARCHITECTURE_NEUTRAL
@@ -499,7 +499,7 @@ uint64 GetSystemMemorySize()
 }
 
 
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 
 #if defined(MODPLUG_TRACKER)
@@ -548,12 +548,20 @@ void PreventWineDetection()
 
 bool IsOriginal()
 {
+#if MPT_OS_WINDOWS
 	return mpt::osinfo::windows::Version::Current().IsWindows() && !SystemIsWine();
+#else
+	return true;
+#endif
 }
 
 bool IsWine()
 {
+#if MPT_OS_WINDOWS
 	return mpt::osinfo::windows::Version::Current().IsWindows() && SystemIsWine();
+#else
+	return false;
+#endif
 }
 
 

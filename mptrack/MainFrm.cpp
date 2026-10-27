@@ -3512,11 +3512,11 @@ void CMainFrame::UpdateMRUList()
 			}
 
 			const mpt::PathString &pathMPT = TrackerSettings::Instance().mruFiles[i];
-			mpt::winstring path = pathMPT.AsNative();
+			mpt::winstring path = pathMPT.ToWide();
 			if(!mpt::PathCompareNoCase(workDir, pathMPT.GetDirectoryWithDrive()))
 			{
 				// Only show filename
-				path = path.substr(workDir.AsNative().length());
+				path = path.substr(workDir.ToWide().length());
 			} else if(path.length() > 30)	// Magic number experimentally determined to be equal to MFC's behaviour
 			{
 				// Shorten path ("C:\Foo\VeryLongString...\Bar.it" => "C:\Foo\...\Bar.it")

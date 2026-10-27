@@ -218,7 +218,7 @@ static_assert(std::is_standard_layout<mpt::modecharbuf<7, mpt::String::ReadWrite
 
 #ifdef MODPLUG_TRACKER
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 
 namespace String {
 using mpt::ReadWinBuf;

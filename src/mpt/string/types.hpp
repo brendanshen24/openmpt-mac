@@ -18,9 +18,9 @@
 
 #include <cstddef>
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 #include <windows.h>
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 
 
@@ -253,7 +253,7 @@ using exception_string = std::basic_string<char, mpt::encoding_char_traits<excep
 using exception_string_view = std::basic_string_view<char, mpt::encoding_char_traits<exception_encoding>>;
 #endif
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 
 template <typename Tchar>
 struct windows_char_traits { };
@@ -276,7 +276,7 @@ using tstring_view = windows_char_traits<TCHAR>::string_view_type;
 using winstring = mpt::tstring;
 using winstring_view = mpt::tstring_view;
 
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 
 

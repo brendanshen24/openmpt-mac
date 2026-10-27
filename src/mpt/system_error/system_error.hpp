@@ -21,9 +21,9 @@
 #endif // MPT_OS_WINDOWS_WINRT
 #endif // MPT_OS_WINDOWS
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 #include <windows.h>
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 
 
@@ -32,7 +32,7 @@ inline namespace MPT_INLINE_NS {
 
 
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 
 
 
@@ -237,7 +237,7 @@ inline BOOL CheckBOOLOutOfMemory(BOOL result) {
 
 
 
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 
 

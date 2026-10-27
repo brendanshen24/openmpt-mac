@@ -128,16 +128,16 @@ BOOL COptionsGeneral::OnInitDialog()
 	mpt::PathString file;
 	while(scanner.Next(file))
 	{
-		mpt::RawPathString fileW = file.AsNative();
-		fileW = fileW.substr(basePath.Length());
-		::SendMessage(m_defaultTemplate.m_hWnd, CB_ADDSTRING, 0, (LPARAM)fileW.c_str());
+		CString fileW = file.ToCString();
+		fileW = fileW.Mid(static_cast<int>(basePath.Length()));
+		::SendMessage(m_defaultTemplate.m_hWnd, CB_ADDSTRING, 0, (LPARAM)fileW.GetString());
 	}
 	file = TrackerSettings::Instance().defaultTemplateFile;
 	if(file.GetDirectoryWithDrive() == basePath)
 	{
 		file = file.GetFilename();
 	}
-	m_defaultTemplate.SetWindowText(file.AsNative().c_str());
+	m_defaultTemplate.SetWindowText(file.ToCString());
 
 	CheckRadioButton(IDC_RADIO1, IDC_RADIO3, IDC_RADIO1 + TrackerSettings::Instance().defaultNewFileAction);
 
@@ -219,7 +219,7 @@ void COptionsGeneral::OnBrowseTemplate()
 		dlg.WorkingDirectory(basePath);
 	} else
 	{
-		if(defaultFile.AsNative().find_first_of(_T("/\\")) == mpt::RawPathString::npos)
+		if(defaultFile.AsNative().find_first_of(P_("/\\").AsNative()) == mpt::RawPathString::npos)
 		{
 			// Relative path
 			defaultFile = basePath + defaultFile;
@@ -233,7 +233,7 @@ void COptionsGeneral::OnBrowseTemplate()
 		{
 			defaultFile = defaultFile.GetFilename();
 		}
-		m_defaultTemplate.SetWindowText(defaultFile.AsNative().c_str());
+		m_defaultTemplate.SetWindowText(defaultFile.ToCString());
 		OnTemplateChanged();
 	}
 }

@@ -1,5 +1,7 @@
 #include "rar.hpp"
+#include "isnt.hpp"
 
+#ifdef _WIN_ALL
 DWORD WinNT()
 {
   static int dwPlatformId=-1;
@@ -109,3 +111,14 @@ bool IsWindows11OrGreater()
   }
   return IsWin11;
 }
+#else
+DWORD WinNT()
+{
+  return WNT_NONE;
+}
+
+bool IsWindows11OrGreater()
+{
+  return false;
+}
+#endif

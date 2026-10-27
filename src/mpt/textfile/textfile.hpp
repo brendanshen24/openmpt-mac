@@ -124,7 +124,7 @@ inline encoding get_preferred_encoding() {
 		result = encoding{encoding::type::utf8, encoding::header::bom};
 	}
 #else
-	result = encoding::locale;
+	result = encoding{encoding::type::locale, encoding::header::none};
 #endif
 	return result;
 }

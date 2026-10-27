@@ -7,19 +7,19 @@
 
 #include "mpt/base/detect.hpp"
 #include "mpt/base/namespace.hpp"
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 #include "mpt/base/saturate_cast.hpp"
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 #include "mpt/fs/fs.hpp"
 #include "mpt/path/native_path.hpp"
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 #include <vector>
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 #include <windows.h>
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 
 
@@ -28,7 +28,7 @@ inline namespace MPT_INLINE_NS {
 
 
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 
 
 
@@ -83,7 +83,7 @@ public:
 
 
 
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 
 

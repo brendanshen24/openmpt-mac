@@ -36,6 +36,7 @@
 #include "WelcomeDialog.h"
 #include "WineSoundDeviceStub.h"
 #include "../common/ComponentManager.h"
+#include "../common/misc_util.h"
 #include "../common/mptStringBuffer.h"
 #include "../common/version.h"
 #include "../misc/mptOS.h"
@@ -1539,7 +1540,9 @@ BOOL CTrackApp::InitInstanceImpl(CMPTCommandLineInfo &cmdInfo)
 	appInfo.MaskDriverCrashes = TrackerSettings::Instance().SoundMaskDriverCrashes;
 	appInfo.AllowDeferredProcessing = TrackerSettings::Instance().SoundAllowDeferredProcessing;
 	std::vector<std::shared_ptr<SoundDevice::IDevicesEnumerator>> deviceEnumerators = SoundDevice::Manager::GetEnabledEnumerators(*m_pAllSoundDeviceComponents);
+#if MPT_OS_WINDOWS
 	deviceEnumerators.push_back(std::static_pointer_cast<SoundDevice::IDevicesEnumerator>(std::make_shared<SoundDevice::DevicesEnumerator<SoundDevice::SoundDeviceStub>>()));
+#endif
 	m_pSoundDevicesManager = std::make_unique<SoundDevice::Manager>(m_GlobalLogger, sysInfo, appInfo, std::move(deviceEnumerators));
 	m_pTrackerSettings->MigrateOldSoundDeviceSettings(*m_pSoundDevicesManager);
 

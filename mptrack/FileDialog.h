@@ -44,12 +44,21 @@ public:
 	// Default extension to use if none is specified.
 	FileDialog &DefaultExtension(const mpt::RawPathString &ext) { m_defaultExtension = ext; return *this; }
 	FileDialog &DefaultExtension(const mpt::PathString &ext) { m_defaultExtension = ext.AsNative(); return *this; }
+#if MPT_OS_WINDOWS
 	FileDialog &DefaultExtension(const AnyStringLocale &ext) { m_defaultExtension = mpt::ToWin(ext); return *this; }
 	FileDialog &DefaultExtension(const CString &ext) { m_defaultExtension = mpt::ToWin(ext); return *this; }
 	FileDialog &DefaultExtension(const char *ext) { m_defaultExtension = mpt::ToWin(mpt::Charset::Locale, ext); return *this; }
+#else
+	FileDialog &DefaultExtension(const std::string &ext) { m_defaultExtension = mpt::PathString::FromLocale(ext).AsNative(); return *this; }
+	FileDialog &DefaultExtension(const mpt::ustring &ext) { m_defaultExtension = mpt::PathString::FromUnicode(ext).AsNative(); return *this; }
+	FileDialog &DefaultExtension(const AnyStringLocale &ext) { m_defaultExtension = mpt::PathString::FromUnicode(ext).AsNative(); return *this; }
+	FileDialog &DefaultExtension(const CString &ext) { m_defaultExtension = mpt::PathString::FromCString(ext).AsNative(); return *this; }
+	FileDialog &DefaultExtension(const char *ext) { m_defaultExtension = mpt::PathString::FromLocale(ext).AsNative(); return *this; }
+#endif
 	// Default suggested filename.
 	FileDialog &DefaultFilename(const mpt::RawPathString &name) { m_defaultFilename = name; return *this; }
 	FileDialog &DefaultFilename(const mpt::PathString &name) { m_defaultFilename = name.AsNative(); return *this; }
+#if MPT_OS_WINDOWS
 	FileDialog &DefaultFilename(const AnyStringLocale &name) { m_defaultFilename = mpt::ToWin(name); return *this; }
 	FileDialog &DefaultFilename(const CString &name) { m_defaultFilename = mpt::ToWin(name); return *this; }
 	FileDialog &DefaultFilename(const char *name) { m_defaultFilename = mpt::ToWin(mpt::Charset::Locale, name); return *this; }
@@ -59,6 +68,21 @@ public:
 	FileDialog &ExtensionFilter(const AnyStringLocale &filter) { m_extFilter = mpt::ToWin(filter); return *this; }
 	FileDialog &ExtensionFilter(const CString &filter) { m_extFilter = mpt::ToWin(filter); return *this; }
 	FileDialog &ExtensionFilter(const char *filter) { m_extFilter = mpt::ToWin(mpt::Charset::Locale, filter); return *this; }
+#else
+	FileDialog &DefaultFilename(const std::string &name) { m_defaultFilename = mpt::PathString::FromLocale(name).AsNative(); return *this; }
+	FileDialog &DefaultFilename(const mpt::ustring &name) { m_defaultFilename = mpt::PathString::FromUnicode(name).AsNative(); return *this; }
+	FileDialog &DefaultFilename(const AnyStringLocale &name) { m_defaultFilename = mpt::PathString::FromUnicode(name).AsNative(); return *this; }
+	FileDialog &DefaultFilename(const CString &name) { m_defaultFilename = mpt::PathString::FromCString(name).AsNative(); return *this; }
+	FileDialog &DefaultFilename(const char *name) { m_defaultFilename = mpt::PathString::FromLocale(name).AsNative(); return *this; }
+	// List of possible extensions. Format: "description|extensions|...|description|extensions||"
+	FileDialog &ExtensionFilter(const mpt::RawPathString &filter) { m_extFilter = filter; return *this; }
+	FileDialog &ExtensionFilter(const mpt::PathString &filter) { m_extFilter = filter.AsNative(); return *this; }
+	FileDialog &ExtensionFilter(const std::string &filter) { m_extFilter = mpt::PathString::FromLocale(filter).AsNative(); return *this; }
+	FileDialog &ExtensionFilter(const mpt::ustring &filter) { m_extFilter = mpt::PathString::FromUnicode(filter).AsNative(); return *this; }
+	FileDialog &ExtensionFilter(const AnyStringLocale &filter) { m_extFilter = mpt::PathString::FromUnicode(filter).AsNative(); return *this; }
+	FileDialog &ExtensionFilter(const CString &filter) { m_extFilter = mpt::PathString::FromCString(filter).AsNative(); return *this; }
+	FileDialog &ExtensionFilter(const char *filter) { m_extFilter = mpt::PathString::FromLocale(filter).AsNative(); return *this; }
+#endif
 	// Default directory of the dialog.
 	FileDialog &WorkingDirectory(const mpt::PathString &dir) { m_workingDirectory = dir.AsNative(); return *this; }
 	// Pointer to a variable holding the index of the last extension filter to use. Holds the selected filter after the dialog has been closed.

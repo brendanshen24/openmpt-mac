@@ -515,6 +515,11 @@ public:
 					MPT_LOG(GetLogger(), LogError, "sounddev", MPT_UFORMAT_MESSAGE("sched_setscheduler: {}")(errno));
 #endif
 				}
+#elif MPT_OS_MACOSX_OR_IOS
+				if(pthread_setschedparam(pthread_self(), SCHED_RR, &p) == 0)
+				{
+					successfull = true;
+				}
 #else
 				if(sched_setscheduler(0, SCHED_RR, &p) == 0)
 				{

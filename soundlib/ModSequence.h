@@ -115,9 +115,11 @@ public:
 #ifdef MODPLUG_TRACKER
 	// Check if a playback position is currently locked (inaccessible)
 	bool IsPositionLocked(ORDERINDEX position) const noexcept;
+#endif // MODPLUG_TRACKER
+#if defined(MODPLUG_TRACKER) || defined(MPT_BUILD_MAC_EDITOR)
 	// Check if this sequence has subsongs separated by invalid ("---" or non-existing) patterns
 	bool HasSubsongs() const noexcept;
-#endif // MODPLUG_TRACKER
+#endif // MODPLUG_TRACKER || MPT_BUILD_MAC_EDITOR
 
 	inline void SetName(mpt::ustring newName) noexcept { m_name = std::move(newName); }
 	inline mpt::ustring GetName() const { return m_name; }
@@ -170,7 +172,7 @@ public:
 	// Removes given sequence.
 	void RemoveSequence(SEQUENCEINDEX);
 
-#ifdef MODPLUG_TRACKER
+#if defined(MODPLUG_TRACKER) || defined(MPT_BUILD_MAC_EDITOR)
 	// Assigns a new set of sequences. The vector contents indicate which existing sequences to keep / duplicate or if a new sequences should be inserted (SEQUENCEINDEX_INVALID)
 	// The function fails if the vector is empty or contains too many sequences.
 	bool Rearrange(const std::vector<SEQUENCEINDEX> &newOrder);

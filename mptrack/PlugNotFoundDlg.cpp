@@ -50,10 +50,10 @@ BOOL PlugNotFoundDialog::OnInitDialog()
 
 	for(const auto &plug : m_plugins)
 	{
-		const int insertAt = m_List.InsertItem(m_List.GetItemCount(), plug->libraryName.AsNative().c_str());
+		const int insertAt = m_List.InsertItem(m_List.GetItemCount(), plug->libraryName.ToCString());
 		if(insertAt == -1)
 			continue;
-		m_List.SetItemText(insertAt, 1, plug->dllPath.AsNative().c_str());
+		m_List.SetItemText(insertAt, 1, plug->dllPath.ToCString());
 		m_List.SetItemDataPtr(insertAt, plug);
 		m_List.SetCheck(insertAt);
 	}

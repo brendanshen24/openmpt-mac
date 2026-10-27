@@ -25,7 +25,7 @@
 
 #include "mptString.h"
 
-#if defined(MODPLUG_TRACKER) && MPT_OS_WINDOWS
+#if defined(MODPLUG_TRACKER)
 #include <windows.h>
 #endif
 
@@ -76,7 +76,7 @@ inline mpt::ustring ToUString(const T &x)
 
 
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 
 
 
@@ -97,7 +97,7 @@ inline int PathCompareNoCase(const PathString &a, const PathString &b)
 
 
 
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 
 

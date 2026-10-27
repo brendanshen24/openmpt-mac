@@ -105,7 +105,7 @@ public:
 	uint32 GetColor() const noexcept { return m_color; }
 	void SetColor(uint32 color) noexcept { m_color = color; }
 
-#ifdef MODPLUG_TRACKER
+#if defined(MODPLUG_TRACKER) || defined(MPT_BUILD_MAC_EDITOR)
 	// Double number of rows
 	bool Expand();
 

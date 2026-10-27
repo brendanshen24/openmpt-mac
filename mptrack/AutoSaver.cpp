@@ -219,7 +219,11 @@ void CAutoSaver::DeleteAutosave(const mpt::PathString &fileName, bool deletePerm
 	// Note: We could supply multiple filenames here. However, if the files in total are too big for the recycling bin,
 	// this will cause all of them to be deleted permanently. If we supply them one by one, at least some of them
 	// will go to the recycling bin until it is full.
+#if MPT_OS_WINDOWS
 	mpt::winstring path = fileName.AsNative() + _T('\0');
+#else
+	mpt::winstring path = fileName.ToWide() + _T('\0');
+#endif
 	SHFILEOPSTRUCT fos{};
 	fos.hwnd = CMainFrame::GetMainFrame()->m_hWnd;
 	fos.wFunc = FO_DELETE;

@@ -365,7 +365,7 @@ inline mpt::lstring ToLocale(Tencoding &&from, Tsrc &&str)
 }
 #endif // MPT_ENABLE_CHARSET_LOCALE
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 template <typename Tsrc>
 inline mpt::winstring ToWin(Tsrc &&str)
 {
@@ -376,7 +376,7 @@ inline mpt::winstring ToWin(Tencoding &&from, Tsrc &&str)
 {
 	return mpt::transcode<mpt::winstring>(std::forward<Tencoding>(from), std::forward<Tsrc>(str));
 }
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 #if defined(MPT_WITH_MFC)
 template <typename Tsrc>

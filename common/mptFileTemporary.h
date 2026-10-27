@@ -14,7 +14,7 @@
 
 #include "mpt/base/namespace.hpp"
 
-#if defined(MODPLUG_TRACKER) && MPT_OS_WINDOWS
+#if defined(MODPLUG_TRACKER)
 
 #include "mpt/fs/common_directories.hpp"
 #include "mpt/fs/fs.hpp"
@@ -25,11 +25,9 @@
 #include "mptPathString.h"
 #include "mptRandom.h"
 
-#if MPT_OS_WINDOWS
 #include <windows.h>
-#endif
 
-#endif // MODPLUG_TRACKER && MPT_OS_WINDOWS
+#endif // MODPLUG_TRACKER
 
 
 
@@ -42,7 +40,7 @@ namespace mpt
 
 
 
-#if defined(MODPLUG_TRACKER) && MPT_OS_WINDOWS
+#if defined(MODPLUG_TRACKER)
 
 
 
@@ -132,7 +130,7 @@ public:
 
 
 
-#endif // MODPLUG_TRACKER && MPT_OS_WINDOWS
+#endif // MODPLUG_TRACKER
 
 
 

@@ -10,6 +10,7 @@
 
 #include "stdafx.h"
 #include "MPTrackUtil.h"
+#include <ShObjIdl.h>
 
 
 OPENMPT_NAMESPACE_BEGIN
@@ -23,7 +24,7 @@ static bool CreateShellLink(const IID &type, const mpt::PathString &path, const 
 	if(SUCCEEDED(hres))
 	{
 		IPersistFile *ppf = nullptr;
-		psl->SetPath(target.AsNative().c_str()); 
+		psl->SetPath(target.ToWide().c_str()); 
 		psl->SetDescription(mpt::ToWin(description).c_str());
 		hres = psl->QueryInterface(IID_IPersistFile, (LPVOID*)&ppf);
 		if(SUCCEEDED(hres))

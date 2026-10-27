@@ -12,6 +12,7 @@
 
 #include "stdafx.h"
 #include "Loaders.h"
+#include "../common/mptFileIO.h"
 
 OPENMPT_NAMESPACE_BEGIN
 

@@ -28,7 +28,7 @@ OPENMPT_NAMESPACE_BEGIN
 namespace Util
 {
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 
 void MultimediaClock::Init()
 {

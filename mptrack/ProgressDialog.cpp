@@ -12,6 +12,7 @@
 #include "ProgressDialog.h"
 #include "Mptrack.h"
 #include "resource.h"
+#include <ShObjIdl.h>
 
 OPENMPT_NAMESPACE_BEGIN
 

@@ -69,7 +69,7 @@ BOOL WelcomeDlg::OnInitDialog()
 	SetDlgItemText(IDC_EDIT2, mpt::ToCString(TrackerSettings::Instance().defaultArtist.Get()));
 	if(!m_vstPath.empty())
 	{
-		SetDlgItemText(IDC_EDIT1, m_vstPath.AsNative().c_str());
+		SetDlgItemText(IDC_EDIT1, m_vstPath.ToCString());
 		if(TrackerSettings::Instance().PathPlugins.GetDefaultDir().empty())
 		{
 			TrackerSettings::Instance().PathPlugins.SetDefaultDir(m_vstPath);

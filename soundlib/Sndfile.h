@@ -393,9 +393,9 @@ class CSoundFile
 	friend class MIDIMacroParser;
 
 public:
-#ifdef MODPLUG_TRACKER
+#if defined(MODPLUG_TRACKER) || defined(MPT_BUILD_MAC_EDITOR)
 	void ChangeModTypeTo(const MODTYPE newType, bool adjust = true);
-#endif // MODPLUG_TRACKER
+#endif // MODPLUG_TRACKER || MPT_BUILD_MAC_EDITOR
 
 	// Returns value in seconds. If given position won't be played at all, returns -1.
 	// If updateVars is true, the state of various playback variables will be updated according to the playback position.

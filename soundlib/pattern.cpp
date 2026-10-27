@@ -192,7 +192,7 @@ bool CPattern::operator== (const CPattern &other) const noexcept
 }
 
 
-#ifdef MODPLUG_TRACKER
+#if defined(MODPLUG_TRACKER) || defined(MPT_BUILD_MAC_EDITOR)
 
 bool CPattern::Expand()
 {

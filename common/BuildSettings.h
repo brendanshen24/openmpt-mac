@@ -116,7 +116,9 @@
 // Use architecture-specific intrinsics
 #define MPT_ENABLE_ARCH_INTRINSICS
 
+#if MPT_OS_WINDOWS
 #define MPT_ENABLE_UPDATE
+#endif
 
 #if defined(MPT_BUILD_DEBUG)
 #define MPT_ENABLE_PLAYBACK_TEST_MENU
@@ -158,6 +160,8 @@
 #if defined(LIBOPENMPT_BUILD_TEST)
 #define ENABLE_TESTS
 #define MPT_ENABLE_PLAYBACK_TRACE
+#elif defined(MPT_BUILD_MAC_EDITOR)
+// Native macOS editor (mac-app): keep module and sample writers enabled
 #else
 #define MODPLUG_NO_FILESAVE
 #endif

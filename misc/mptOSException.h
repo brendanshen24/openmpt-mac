@@ -15,15 +15,15 @@
 #include "mptBaseMacros.h"
 #include "mptBaseTypes.h"
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 #include <windows.h>
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 
 OPENMPT_NAMESPACE_BEGIN
 
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 
 
 namespace Windows
@@ -175,7 +175,7 @@ auto TryReturnOrDefault(const Tfn &fn, decltype(fn()) def = decltype(fn()){}) ->
 }  // namespace Windows
 
 
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 
 OPENMPT_NAMESPACE_END

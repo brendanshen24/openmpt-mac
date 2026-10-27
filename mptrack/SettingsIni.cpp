@@ -12,6 +12,7 @@
 #include "stdafx.h"
 
 #include "SettingsIni.h"
+#include "../common/Profiler.h"
 
 #include "mpt/base/bit.hpp"
 #include "mpt/base/integer.hpp"
@@ -166,7 +167,9 @@ void WindowsIniFileBase::ConvertToUnicode(std::optional<Caching> sync_hint)
 		std::unique_lock l{file};
 		const std::vector<std::byte> filedata = file.read();
 		const mpt::textfile::encoding desired_encoding = mpt::textfile::get_preferred_encoding();
+#if MPT_OS_WINDOWS
 		static_assert(sizeof(wchar_t) == 2);
+#endif
 		MPT_ASSERT(mpt::endian_is_little());
 		file.write(mpt::textfile::encode(desired_encoding, DecodeText(filedata, filename)), sync_hint.value_or(sync_default.value_or(Caching::WriteBack)) == Caching::WriteThrough);
 	}

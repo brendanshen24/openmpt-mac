@@ -59,7 +59,7 @@ BOOL MissingExternalSamplesDlg::OnInitDialog()
 	m_List.SetExtendedStyle(m_List.GetExtendedStyle() | LVS_EX_FULLROWSELECT);
 
 	GenerateList();
-	SetWindowText((_T("Missing External Samples - ") + m_modDoc.GetPathNameMpt().GetFilename().AsNative()).c_str());
+	SetWindowText(_T("Missing External Samples - ") + m_modDoc.GetPathNameMpt().GetFilename().ToCString());
 
 	return TRUE;
 }
@@ -79,7 +79,7 @@ void MissingExternalSamplesDlg::GenerateList()
 			int insertAt = m_List.InsertItem(m_List.GetItemCount(), s);
 			if(insertAt == -1)
 				continue;
-			m_List.SetItemText(insertAt, 1, m_sndFile.GetSamplePath(smp).AsNative().c_str());
+			m_List.SetItemText(insertAt, 1, m_sndFile.GetSamplePath(smp).ToCString());
 			m_List.SetItemData(insertAt, smp);
 		}
 	}
@@ -165,7 +165,7 @@ void MissingExternalSamplesDlg::OnScanFolder()
 			if(tick < lastTick || tick > lastTick + 100)
 			{
 				lastTick = tick;
-				SetDlgItemText(IDC_STATIC1, fileName.AsNative().c_str());
+				SetDlgItemText(IDC_STATIC1, fileName.ToCString());
 				MSG msg;
 				while(::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 				{
@@ -200,7 +200,7 @@ bool MissingExternalSamplesDlg::SetSample(SAMPLEINDEX smp, const mpt::PathString
 	const mpt::PathString oldPath = m_sndFile.GetSamplePath(smp);
 	if(!m_sndFile.LoadExternalSample(smp, fileName))
 	{
-		Reporting::Information(_T("Unable to load sample:\n") + fileName.AsNative());
+		Reporting::Information(_T("Unable to load sample:\n") + fileName.ToCString());
 		m_modDoc.GetSampleUndo().RemoveLastUndoStep(smp);
 		return false;
 	} else
@@ -254,7 +254,7 @@ BOOL ModifiedExternalSamplesDlg::OnInitDialog()
 	m_List.SetExtendedStyle(m_List.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES);
 
 	GenerateList();
-	SetWindowText((_T("Modified External Samples - ") + m_modDoc.GetPathNameMpt().GetFilename().AsNative()).c_str());
+	SetWindowText(_T("Modified External Samples - ") + m_modDoc.GetPathNameMpt().GetFilename().ToCString());
 
 	return TRUE;
 }
@@ -286,7 +286,7 @@ void ModifiedExternalSamplesDlg::GenerateList()
 		if(insertAt == -1)
 			continue;
 		m_List.SetItemText(insertAt, 1, status.c_str());
-		m_List.SetItemText(insertAt, 2, m_sndFile.GetSamplePath(smp).AsNative().c_str());
+		m_List.SetItemText(insertAt, 2, m_sndFile.GetSamplePath(smp).ToCString());
 		m_List.SetCheck(insertAt, TRUE);
 		m_List.SetItemData(insertAt, smp);
 	}

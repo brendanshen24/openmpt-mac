@@ -131,6 +131,7 @@ bool FileDialog::Show(CWnd *parent)
 	m_filenames.clear();
 
 	// First, set up the dialog...
+#if MPT_OS_WINDOWS
 	CFileDialogEx dlg(m_load ? FileDialogType::OpenFile : FileDialogType::SaveFile,
 		m_defaultExtension.empty() ? nullptr : m_defaultExtension.c_str(),
 		m_defaultFilename.c_str(),
@@ -146,6 +147,27 @@ bool FileDialog::Show(CWnd *parent)
 	{
 		ofn.lpstrInitialDir = m_workingDirectory.c_str();
 	}
+#else
+	const mpt::winstring wDefExt = mpt::ToWin(m_defaultExtension);
+	const mpt::winstring wDefFile = mpt::ToWin(m_defaultFilename);
+	const mpt::winstring wExtFilter = mpt::ToWin(m_extFilter);
+	const mpt::winstring wWorkDir = mpt::ToWin(m_workingDirectory);
+	CFileDialogEx dlg(m_load ? FileDialogType::OpenFile : FileDialogType::SaveFile,
+		wDefExt.empty() ? nullptr : wDefExt.c_str(),
+		wDefFile.c_str(),
+		OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | (m_multiSelect ? OFN_ALLOWMULTISELECT : 0) | (m_load ? 0 : (OFN_OVERWRITEPROMPT | OFN_NOREADONLYRETURN)),
+		wExtFilter.c_str(),
+		parent != nullptr ? parent : CMainFrame::GetMainFrame(),
+		0,
+		CFileDialogEx::CanUseModernStyle() ? TRUE : FALSE,
+		m_preview && TrackerSettings::Instance().previewInFileDialogs);
+	OPENFILENAME &ofn = dlg.GetOFN();
+	ofn.nFilterIndex = m_filterIndex != nullptr ? *m_filterIndex : 0;
+	if(!wWorkDir.empty())
+	{
+		ofn.lpstrInitialDir = wWorkDir.c_str();
+	}
+#endif
 	if(!m_caption.IsEmpty())
 	{
 		ofn.lpstrTitle = m_caption;
@@ -224,10 +246,15 @@ bool FileDialog::Show(CWnd *parent)
 // Helper callback to set start path.
 int CALLBACK BrowseForFolder::BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM /*lParam*/, LPARAM lpData)
 {
-	if(uMsg == BFFM_INITIALIZED && lpData != NULL)
+	if(uMsg == BFFM_INITIALIZED && lpData != 0)
 	{
 		const BrowseForFolder *that = reinterpret_cast<BrowseForFolder *>(lpData);
+#if MPT_OS_WINDOWS
 		SendMessage(hwnd, BFFM_SETSELECTION, TRUE, reinterpret_cast<LPARAM>(that->m_workingDirectory.AsNative().c_str()));
+#else
+		const mpt::winstring wWorkDir = that->m_workingDirectory.ToWide();
+		SendMessage(hwnd, BFFM_SETSELECTION, TRUE, reinterpret_cast<LPARAM>(wWorkDir.c_str()));
+#endif
 	}
 	return 0;
 }
@@ -241,7 +268,7 @@ bool BrowseForFolder::Show(CWnd *parent)
 	// Note: MFC's CFolderPickerDialog won't work on pre-Vista systems, as it tries to use OPENFILENAME unconditionally.
 	if(CFileDialogEx::CanUseModernStyle() && !TrackerSettings::Instance().useOldStyleFolderBrowser)
 	{
-		CFileDialogEx dlg{FileDialogType::BrowseForFolder, nullptr, m_workingDirectory.AsNative().c_str(), 0, nullptr, parent, 0, TRUE, false};
+		CFileDialogEx dlg{FileDialogType::BrowseForFolder, nullptr, m_workingDirectory.ToCString(), 0, nullptr, parent, 0, TRUE, false};
 		dlg.m_ofn.lpstrTitle = m_caption;
 #if MPT_WINNT_AT_LEAST(MPT_WIN_VISTA)
 		for(const auto &place : m_places)

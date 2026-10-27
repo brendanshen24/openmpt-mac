@@ -382,7 +382,7 @@ void ModSequenceSet::RemoveSequence(SEQUENCEINDEX i)
 }
 
 
-#ifdef MODPLUG_TRACKER
+#if defined(MODPLUG_TRACKER) || defined(MPT_BUILD_MAC_EDITOR)
 
 bool ModSequenceSet::Rearrange(const std::vector<SEQUENCEINDEX> &newOrder)
 {
@@ -585,6 +585,9 @@ bool ModSequenceSet::MergeSequences()
 	return true;
 }
 
+#endif // MODPLUG_TRACKER || MPT_BUILD_MAC_EDITOR
+
+#ifdef MODPLUG_TRACKER
 
 // Check if a playback position is currently locked (inaccessible)
 bool ModSequence::IsPositionLocked(ORDERINDEX position) const noexcept
@@ -593,6 +596,9 @@ bool ModSequence::IsPositionLocked(ORDERINDEX position) const noexcept
 		&& (position < m_sndFile.m_lockOrderStart || position > m_sndFile.m_lockOrderEnd));
 }
 
+#endif // MODPLUG_TRACKER
+
+#if defined(MODPLUG_TRACKER) || defined(MPT_BUILD_MAC_EDITOR)
 
 bool ModSequence::HasSubsongs() const noexcept
 {

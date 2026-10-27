@@ -170,7 +170,7 @@ inline StringBufRefImpl<typename std::basic_string<typename std::remove_const<Tc
 
 
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 
 template <typename Tchar, std::size_t size>
 inline StringBufRefImpl<typename mpt::windows_char_traits<typename std::remove_const<Tchar>::type>::string_type, typename std::add_const<Tchar>::type> ReadWinBuf(const std::array<Tchar, size> & buf) {
@@ -197,7 +197,7 @@ inline StringBufRefImpl<typename mpt::windows_char_traits<typename std::remove_c
 	return StringBufRefImpl<typename mpt::windows_char_traits<typename std::remove_const<Tchar>::type>::string_type, Tchar>(buf, size);
 }
 
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 
 

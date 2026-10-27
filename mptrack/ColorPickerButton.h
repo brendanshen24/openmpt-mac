@@ -12,6 +12,8 @@
 
 #include "openmpt/all/BuildSettings.hpp"
 #include "../soundlib/Snd_defs.h"
+#include <map>
+#include <optional>
 
 OPENMPT_NAMESPACE_BEGIN
 

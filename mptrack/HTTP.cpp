@@ -11,7 +11,8 @@
 #include "stdafx.h"
 #include "HTTP.h"
 #include "mpt/system_error/system_error.hpp"
-#include <WinInet.h>
+#include <wininet.h>
+#include "mpt/base/alloc.hpp"
 #include "mpt/format/join.hpp"
 #include "mpt/io/io.hpp"
 #include "mpt/io/io_stdstream.hpp"

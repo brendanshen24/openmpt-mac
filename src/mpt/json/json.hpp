@@ -22,6 +22,8 @@
 #endif // MPT_COMPILER_MSVC
 #endif // MPT_DETECTED_NLOHMANN_JSON
 
+#if MPT_DETECTED_NLOHMANN_JSON
+
 #if !defined(MPT_BUILD_MSVC)
 #if NLOHMANN_JSON_VERSION_MAJOR < 3
 #define MPT_JSON_JSON_NLOHMANN_JSON_QUIRK_NO_STD_OPTIONAL
@@ -94,6 +96,6 @@ struct adl_serializer<std::optional<Tvalue>> {
 
 } // namespace nlohmann
 
-
+#endif // MPT_DETECTED_NLOHMANN_JSON
 
 #endif // MPT_JSON_JSON_HPP

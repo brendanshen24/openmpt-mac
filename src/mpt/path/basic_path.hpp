@@ -961,6 +961,15 @@ public:
 	static BasicPathString FromNative(const raw_path_type & path) {
 		return BasicPathString(path);
 	}
+#if !defined(MPT_COMPILER_QUIRK_NO_WCHAR)
+	static BasicPathString FromNative(const wchar_t * wpath) {
+		return FromWide(wpath ? wpath : L"");
+	}
+	template <typename TString, typename std::enable_if<std::is_same<TString, std::wstring>::value && !std::is_same<raw_path_type, std::wstring>::value, bool>::type = true>
+	static BasicPathString FromNative(const TString & wpath) {
+		return FromWide(wpath);
+	}
+#endif
 
 	mpt::ustring ToUnicode() const {
 		return mpt::transcode<mpt::ustring>(path);

@@ -122,7 +122,7 @@ using ufmt = fmtT<mpt::ustring>;
 #if defined(MPT_ENABLE_CHARSET_LOCALE)
 using lfmt = fmtT<mpt::lstring>;
 #endif // MPT_ENABLE_CHARSET_LOCALE
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 using tfmt = fmtT<mpt::tstring>;
 #endif
 #if defined(MPT_WITH_MFC)
@@ -142,9 +142,9 @@ using cfmt = fmtT<CString>;
 #define MPT_LFORMAT(f) MPT_LFORMAT_MESSAGE(f)
 #endif // MPT_ENABLE_CHARSET_LOCALE
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 #define MPT_TFORMAT(f) MPT_TFORMAT_MESSAGE(f)
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 #if defined(MPT_WITH_MFC)
 #define MPT_CFORMAT(f) MPT_CFORMAT_MESSAGE(f)

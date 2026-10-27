@@ -651,7 +651,7 @@ void CModTree::RefreshDlsBanks()
 			DeleteChildren(m_tiDLS[iDls]);
 		else
 			m_tiDLS[iDls] = InsertItem(TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM,
-				dlsBank.GetFileName().GetFilename().AsNative().c_str(), IMAGE_FOLDER, IMAGE_FOLDER, 0, 0, iDls, TVI_ROOT, hInsertAfter);
+				dlsBank.GetFileName().GetFilename().ToCString(), IMAGE_FOLDER, IMAGE_FOLDER, 0, 0, iDls, TVI_ROOT, hInsertAfter);
 
 		std::map<uint16, HTREEITEM> banks;
 		HTREEITEM hDrums = nullptr;
@@ -1574,7 +1574,7 @@ BOOL CModTree::PlayItem(HTREEITEM hItem, ModCommand::NOTE note, int volume)
 					// Preview sample / instrument file
 					auto file = InsLibGetFullPath(hItem);
 					// If it's a shell link, resolve the link target
-					if(auto resolvedName = LinkResolver().Resolve(file.AsNative().c_str()); !resolvedName.empty())
+					if(auto resolvedName = LinkResolver().Resolve(file.ToCString()); !resolvedName.empty())
 						file = std::move(resolvedName);
 
 					if(pMainFrm)
@@ -1806,7 +1806,7 @@ void CModTree::DeleteTreeItem(HTREEITEM hItem, const bool permanently)
 	case MODITEM_INSLIB_INSTRUMENT:
 		{
 			// Create double-null-terminated path
-			const mpt::winstring fullPath = InsLibGetFullPath(hItem).AsNative() + _T('\0');
+			const mpt::winstring fullPath = InsLibGetFullPath(hItem).ToWide() + _T('\0');
 			SHFILEOPSTRUCT fos;
 			MemsetZero(fos);
 			fos.hwnd = m_hWnd;
@@ -2099,7 +2099,7 @@ void CModTree::FillInstrumentLibrary(const TCHAR *selectedItem)
 					if(type == FILTER_UNKNOWN_FILE)
 					{
 						// Try resolving file as link if it wasn't a module or instrument
-						const auto nativePath = (m_InstrLibPath.AsNative() + wfd.cFileName);
+						const auto nativePath = (m_InstrLibPath.ToWide() + wfd.cFileName);
 						if(const auto resolvedName = linkResolver.Resolve(nativePath.c_str()); !resolvedName.empty())
 						{
 							if(mpt::native_fs{}.is_directory(resolvedName) && showDirs)
@@ -2442,7 +2442,7 @@ void CModTree::InstrumentLibraryChDir(mpt::PathString dir, bool isSong)
 			} else
 			{
 				// Go one dir up.
-				mpt::winstring prevDir = m_InstrLibPath.GetDirectoryWithDrive().AsNative();
+				mpt::winstring prevDir = m_InstrLibPath.GetDirectoryWithDrive().ToWide();
 				mpt::winstring::size_type pos = prevDir.find_last_of(_T("\\/"), prevDir.length() - 2);
 				if(pos != mpt::winstring::npos)
 				{
@@ -4073,7 +4073,7 @@ void CModTree::OnReloadItem()
 		if(!sndFile.LoadExternalSample(smpID, sndFile.GetSamplePath(smpID)))
 		{
 			pModDoc->GetSampleUndo().RemoveLastUndoStep(smpID);
-			Reporting::Error(_T("Unable to load sample:\n") + sndFile.GetSamplePath(smpID).AsNative());
+			Reporting::Error(_T("Unable to load sample:\n") + sndFile.GetSamplePath(smpID).ToCString());
 		} else
 		{
 			if(!sndFile.GetSample(smpID).uFlags[SMP_KEEPONDISK])

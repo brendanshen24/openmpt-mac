@@ -24,6 +24,7 @@
 #include "../common/version.h"
 #include "../soundlib/mod_specifications.h"
 #include "../soundlib/plugins/PlugInterface.h"
+#include "../misc/mptLibrary.h"
 
 #if MPT_WINNT_AT_LEAST(MPT_WIN_VISTA) && defined(UNICODE)
 #include <afxtaskdialog.h>
@@ -904,7 +905,7 @@ CSoundBankProperties::CSoundBankProperties(const CDLSBank &bank, CWnd *parent)
 		info += "\r\nSoftware:\t" + bi.szSoftware;
 	if (bi.szComments.size())
 		info += "\r\n\r\nComments:\r\n" + bi.szComments;
-	SetCaption((bank.GetFileName().AsNative() + _T(" - Sound Bank Information")));
+	SetCaption(mpt::winstring(bank.GetFileName().ToCString() + _T(" - Sound Bank Information")));
 	SetContent(mpt::ToWin(mpt::Charset::Locale, info));
 }
 

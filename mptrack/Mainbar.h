@@ -16,6 +16,7 @@
 #include "UpdateHints.h"
 #include "UpdateToolTip.h"
 #include "../soundlib/Snd_defs.h"
+#include "../common/FileReaderFwd.h"
 
 OPENMPT_NAMESPACE_BEGIN
 

@@ -23,7 +23,7 @@ OPENMPT_NAMESPACE_BEGIN
 namespace Util
 {
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 
 // RAII wrapper around timeBeginPeriod/timeEndPeriod/timeGetTime (on Windows).
 // This clock is monotonic, even across changing its resolution.

@@ -31,12 +31,12 @@
 
 
 #if defined(MODPLUG_TRACKER)
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 #include <windows.h>
 #include <windowsx.h>
 #include <shlwapi.h>
 #include <mmsystem.h>
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 #endif // MODPLUG_TRACKER
 
 

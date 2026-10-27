@@ -2101,7 +2101,7 @@ std::pair<SamplePosition, uint32> CSoundFile::GetChannelIncrement(const ModChann
 
 bool CSoundFile::ReadNote()
 {
-#ifdef MODPLUG_TRACKER
+#if defined(MODPLUG_TRACKER) || defined(MPT_BUILD_MAC_EDITOR)
 	// Checking end of row ?
 	if(m_PlayState.m_flags[SONG_PAUSED])
 	{

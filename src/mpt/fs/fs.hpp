@@ -10,14 +10,14 @@
 #include "mpt/path/native_path.hpp"
 #include "mpt/path/os_path_long.hpp"
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 #include <vector>
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 #include <shlwapi.h>
 #include <windows.h>
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 
 
@@ -31,7 +31,7 @@ class fs;
 
 
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 
 
 
@@ -93,7 +93,11 @@ public:
 		if (::GetFullPathName(long_path.c_str(), size, fullPathName.data(), nullptr) == 0) {
 			return path;
 		}
+#if MPT_OS_WINDOWS
 		return mpt::native_path::FromNative(fullPathName.data());
+#else
+		return mpt::native_path::FromWide(fullPathName.data());
+#endif
 	}
 #endif // !MPT_OS_WINDOWS_WINRT
 
@@ -123,7 +127,11 @@ public:
 		hFind = ::FindFirstFile(mpt::support_long_path((path + MPT_NATIVE_PATH("*.*")).AsNative()).c_str(), &wfd);
 		if (hFind != NULL && hFind != INVALID_HANDLE_VALUE) {
 			do {
+#if MPT_OS_WINDOWS
 				mpt::native_path filename = mpt::native_path::FromNative(wfd.cFileName);
+#else
+				mpt::native_path filename = mpt::native_path::FromWide(wfd.cFileName);
+#endif
 				if (filename != MPT_NATIVE_PATH(".") && filename != MPT_NATIVE_PATH("..")) {
 					filename = path + filename;
 					if (mpt::fs<mpt::native_path>{}.is_directory(filename)) {
@@ -153,7 +161,7 @@ using native_fs = fs<mpt::native_path>;
 
 
 
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 
 

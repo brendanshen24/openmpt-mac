@@ -12,6 +12,10 @@ typedef uint64_t         uint64; // 64 bits exactly.
 typedef int64_t          int64;  // Signed 64 bits exactly.
 typedef wchar_t          wchar;  // Unicode character
 
+#if !defined(_WIN_ALL) && !defined(DWORD)
+typedef uint32_t         DWORD;
+#endif
+
 // Get lowest 16 bits.
 #define GET_SHORT16(x) (sizeof(ushort)==2 ? (ushort)(x):((x)&0xffff))
 

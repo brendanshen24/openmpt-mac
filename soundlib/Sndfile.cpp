@@ -1724,7 +1724,7 @@ void CSoundFile::SetType(MODTYPE type)
 }
 
 
-#ifdef MODPLUG_TRACKER
+#if defined(MODPLUG_TRACKER) || defined(MPT_BUILD_MAC_EDITOR)
 
 void CSoundFile::ChangeModTypeTo(const MODTYPE newType, bool adjust)
 {
@@ -1758,7 +1758,7 @@ void CSoundFile::ChangeModTypeTo(const MODTYPE newType, bool adjust)
 	m_modFormat.type = GetModSpecifications().GetFileExtension();
 }
 
-#endif // MODPLUG_TRACKER
+#endif // MODPLUG_TRACKER || MPT_BUILD_MAC_EDITOR
 
 
 ModMessageHeuristicOrder CSoundFile::GetMessageHeuristic() const

@@ -199,7 +199,7 @@ void GlobalLogger::SendLogMessage(const mpt::source_location &loc, LogLevel leve
 
 namespace Trace {
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || MPT_OS_MACOSX_OR_IOS
 
 // Debugging functionality will use simple globals.
 

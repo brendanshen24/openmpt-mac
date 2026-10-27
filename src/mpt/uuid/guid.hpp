@@ -30,7 +30,7 @@ inline namespace MPT_INLINE_NS {
 
 
 
-#if MPT_OS_WINDOWS && !defined(MPT_COMPILER_QUIRK_NO_WCHAR)
+#if (MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)) && !defined(MPT_COMPILER_QUIRK_NO_WCHAR)
 
 
 
@@ -162,6 +162,24 @@ inline bool IsCLSID(const mpt::winstring & str_) {
 	return result;
 }
 
+template <typename Char, typename Traits, typename Alloc,
+          typename = std::enable_if_t<!std::is_same_v<std::basic_string<Char, Traits, Alloc>, mpt::winstring>>>
+inline CLSID StringToCLSID(const std::basic_string<Char, Traits, Alloc> & str_) {
+	return StringToCLSID(std::wstring(str_.begin(), str_.end()));
+}
+
+template <typename Char, typename Traits, typename Alloc,
+          typename = std::enable_if_t<!std::is_same_v<std::basic_string<Char, Traits, Alloc>, mpt::winstring>>>
+inline bool VerifyStringToCLSID(const std::basic_string<Char, Traits, Alloc> & str_, CLSID & clsid) {
+	return VerifyStringToCLSID(std::wstring(str_.begin(), str_.end()), clsid);
+}
+
+template <typename Char, typename Traits, typename Alloc,
+          typename = std::enable_if_t<!std::is_same_v<std::basic_string<Char, Traits, Alloc>, mpt::winstring>>>
+inline bool IsCLSID(const std::basic_string<Char, Traits, Alloc> & str_) {
+	return IsCLSID(std::wstring(str_.begin(), str_.end()));
+}
+
 
 // COM IID<->string conversion
 
@@ -186,6 +204,12 @@ inline IID StringToIID(const mpt::winstring & str_) {
 			break;
 	}
 	return iid;
+}
+
+template <typename Char, typename Traits, typename Alloc,
+          typename = std::enable_if_t<!std::is_same_v<std::basic_string<Char, Traits, Alloc>, mpt::winstring>>>
+inline IID StringToIID(const std::basic_string<Char, Traits, Alloc> & str_) {
+	return StringToIID(std::wstring(str_.begin(), str_.end()));
 }
 
 inline mpt::winstring IIDToString(IID iid) {
@@ -274,7 +298,7 @@ inline bool IsValid(::UUID uuid) {
 
 
 
-#endif // MPT_OS_WINDOWS && !MPT_COMPILER_QUIRK_NO_WCHAR
+#endif // (MPT_OS_WINDOWS || MODPLUG_TRACKER) && !MPT_COMPILER_QUIRK_NO_WCHAR
 
 
 

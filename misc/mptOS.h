@@ -40,7 +40,7 @@ namespace Version
 
 } // namespace Version
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 
 enum class Architecture
 {
@@ -83,7 +83,7 @@ std::vector<Architecture> GetSupportedProcessArchitectures(Architecture host);
 
 uint64 GetSystemMemorySize();
 
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 
 #if defined(MODPLUG_TRACKER)

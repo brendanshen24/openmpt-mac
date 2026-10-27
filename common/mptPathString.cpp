@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#if defined(MODPLUG_TRACKER) && MPT_OS_WINDOWS
+#if defined(MODPLUG_TRACKER)
 #include <tchar.h>
 #endif
 
@@ -25,7 +25,7 @@ namespace mpt
 
 
 
-#if defined(MODPLUG_TRACKER) && MPT_OS_WINDOWS
+#if defined(MODPLUG_TRACKER)
 
 
 
@@ -39,6 +39,16 @@ mpt::PathString AbsolutePathToRelative(const mpt::PathString &path, const mpt::P
 	{
 		return result;
 	}
+#if !MPT_OS_WINDOWS
+	// POSIX: no drive letters; paths below relativeTo become "./Somepath".
+	const auto base = relativeTo.WithTrailingSlash().AsNative();
+	if(path.AsNative().compare(0, base.length(), base) == 0)
+	{
+		result = mpt::PathString::FromNative(L<char_type>("./"));
+		result += mpt::PathString::FromNative(path.AsNative().substr(base.length()));
+	}
+	return result;
+#endif
 	if(!_tcsncicmp(relativeTo.AsNative().c_str(), path.AsNative().c_str(), relativeTo.AsNative().length()))
 	{
 		// Path is OpenMPT's directory or a sub directory ("C:\OpenMPT\Somepath" => ".\Somepath")
@@ -63,6 +73,16 @@ mpt::PathString RelativePathToAbsolute(const mpt::PathString &path, const mpt::P
 	{
 		return result;
 	}
+#if !MPT_OS_WINDOWS
+	// POSIX: absolute paths start with '/', "./Somepath" and bare relative paths are below relativeTo.
+	if(path.IsAbsolute())
+	{
+		return result;
+	}
+	result = relativeTo.WithTrailingSlash();
+	result += mpt::PathString::FromNative(path.AsNative().substr(0, 2) == L<char_type>("./") ? path.AsNative().substr(2) : path.AsNative());
+	return result;
+#endif
 	if(path.length() >= 2 && path.AsNative()[0] == L<char_type>('\\') && path.AsNative()[1] == L<char_type>('\\'))
 	{
 		// Network / UNC paths
@@ -88,7 +108,7 @@ mpt::PathString RelativePathToAbsolute(const mpt::PathString &path, const mpt::P
 
 
 
-#endif // MODPLUG_TRACKER && MPT_OS_WINDOWS
+#endif // MODPLUG_TRACKER
 
 
 

@@ -292,12 +292,12 @@ void QuickStartDlg::UpdateFileList(LPARAM highlight, CString filter)
 		{
 			if(m_paths[groupId][i].empty() || (applyFilter && !PathMatchSpec(m_paths[groupId][i].AsNative().c_str(), filter)))
 				continue;
-			const auto filename = m_paths[groupId][i].GetFilename().AsNative();
+			const auto filename = m_paths[groupId][i].GetFilename().ToCString();
 			lvi.iItem = ++itemId;
 			lvi.lParam = static_cast<LPARAM>(i | (groupId << 24));
-			lvi.pszText = const_cast<TCHAR *>(filename.c_str());
+			lvi.pszText = const_cast<TCHAR *>(filename.GetString());
 			m_list.InsertItem(&lvi);
-			m_list.SetItemText(itemId, 1, m_paths[groupId][i].GetDirectoryWithDrive().AsNative().c_str());
+			m_list.SetItemText(itemId, 1, m_paths[groupId][i].GetDirectoryWithDrive().ToCString());
 			if(lvi.lParam == highlight)
 			{
 				m_list.SetItemState(itemId, LVIS_SELECTED, LVIS_SELECTED);

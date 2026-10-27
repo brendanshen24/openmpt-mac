@@ -158,9 +158,9 @@ CModDoc::~CModDoc()
 
 void CModDoc::SetModified(bool modified)
 {
-	static_assert(sizeof(long) == sizeof(m_bModified));
+	static_assert(sizeof(LONG) == sizeof(m_bModified));
 	m_modifiedAutosave = modified;
-	if(!!InterlockedExchange(reinterpret_cast<long *>(&m_bModified), modified ? TRUE : FALSE) != modified)
+	if(!!InterlockedExchange(reinterpret_cast<LONG *>(&m_bModified), modified ? TRUE : FALSE) != modified)
 	{
 		// Update window titles in GUI thread
 		CMainFrame::GetMainFrame()->SendNotifyMessage(WM_MOD_SETMODIFIED, reinterpret_cast<WPARAM>(this), 0);

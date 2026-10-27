@@ -390,7 +390,7 @@ struct AppInfo
 	{
 		return Name;
 	}
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 	AppInfo &SetHWND(HWND hwnd)
 	{
 		UIHandle = mpt::pointer_cast<std::uintptr_t>(hwnd);
@@ -400,7 +400,7 @@ struct AppInfo
 	{
 		return mpt::pointer_cast<HWND>(UIHandle);
 	}
-#endif  // MPT_OS_WINDOWS
+#endif  // MPT_OS_WINDOWS || MODPLUG_TRACKER
 };
 
 

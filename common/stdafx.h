@@ -42,14 +42,14 @@
 
 #endif // MPT_WITH_MFC
 
-#if MPT_OS_WINDOWS
+#if MPT_OS_WINDOWS || defined(MODPLUG_TRACKER)
 
 #include <windows.h>
 #include <windowsx.h>
 #include <shlwapi.h>
 #include <mmsystem.h>
 
-#endif // MPT_OS_WINDOWS
+#endif // MPT_OS_WINDOWS || MODPLUG_TRACKER
 
 #endif // MODPLUG_TRACKER
 
@@ -132,11 +132,16 @@
 // <atomic>
 
 #include "../common/misc_util.h"
+#include "../common/mptCPU.h"
+#include "../common/FileReader.h"
+#include "../common/mptFileIO.h"
+#include "mpt/io/io_span.hpp"
 // <stdexcept>
 // <optional>
 // <vector>
 
-// for std::abs
+// for std::abs, DBL_MAX
+#include <cfloat>
 #include <cstdlib>
 #include <stdlib.h>
 #include <cmath>

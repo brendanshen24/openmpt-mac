@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <bitset>
+#include <map>
 
 OPENMPT_NAMESPACE_BEGIN
 
