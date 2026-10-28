@@ -722,6 +722,12 @@ unsigned int CRtAudioDevice::GetDevice(SoundDevice::Info info)
 	{
 		return 0;
 	}
+	if(apidev[1] == MPT_USTRING("default"))
+	{
+		// Resolved at open time, so the stream follows whatever output the system currently uses.
+		RtAudio rtaudio(RtAudioShim::getCompiledApiByName(mpt::transcode<std::string>(mpt::common_encoding::utf8, apidev[0])));
+		return rtaudio.getDefaultOutputDevice();
+	}
 	return mpt::parse<unsigned int>(apidev[1]);
 }
 
@@ -918,6 +924,16 @@ std::vector<SoundDevice::Info> CRtAudioDevice::EnumerateDevices(ILogger &logger,
 				// clang-format on
 
 				devices.push_back(info);
+				if(rtaudio.getCurrentApi() == RtAudio::MACOSX_CORE && rtinfo.isDefaultOutput)
+				{
+					// CoreAudio devices are fixed hardware (e.g. built-in speakers vs. headphones are separate devices),
+					// so also offer an entry that tracks the system output, as Windows' default devices do.
+					SoundDevice::Info followDefault = info;
+					followDefault.internalID = apidev[0] + MPT_USTRING(",default");
+					followDefault.name = MPT_USTRING("Default Device");
+					followDefault.default_ = Info::Default::Managed;
+					devices.push_back(followDefault);
+				}
 			}
 #if MPT_RTAUDIO_BEFORE(6)
 		} catch(const RtAudioError &)
