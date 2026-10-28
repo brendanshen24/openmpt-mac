@@ -980,3 +980,10 @@
 /test/test.saved.xm
 /unarchiver/*.d
 /unarchiver/*.o
+
+# Native macOS build output
+/build-mac/
+/dist/
+/.idea/
+.DS_Store
+/build-mac-release/
