@@ -2354,7 +2354,23 @@ static NSString *MenuTitle(const std::wstring &text)
 	return W2NS(clean.c_str());
 }
 
-@interface MPTMenuTarget : NSObject
+// ON_UPDATE_COMMAND_UI for a menu item: the handlers write straight to the NSMenuItem.
+class MacMenuCmdUI : public CCmdUI
+{
+public:
+	NSMenuItem *item = nil;
+	void Enable(BOOL bOn) override { m_bEnableChanged = TRUE; item.enabled = bOn; }
+	void SetCheck(int nCheck) override { item.state = nCheck == 0 ? NSControlStateValueOff : nCheck == 1 ? NSControlStateValueOn : NSControlStateValueMixed; }
+	void SetRadio(BOOL bOn) override { SetCheck(bOn ? 1 : 0); }
+	void SetText(LPCTSTR lpszText) override
+	{
+		NSString *title = MenuTitle(lpszText ? lpszText : L"");
+		const NSRange tab = [item.title rangeOfString:@"\t"];
+		item.title = tab.location == NSNotFound ? title : [title stringByAppendingString:[item.title substringFromIndex:tab.location]];
+	}
+};
+
+@interface MPTMenuTarget : NSObject <NSMenuDelegate>
 @property(nonatomic) HWND hWnd;
 @property(nonatomic) UINT selected;
 - (void)menuItemChosen:(NSMenuItem *)sender;
@@ -2366,12 +2382,28 @@ static NSString *MenuTitle(const std::wstring &text)
 	_selected = (UINT)sender.tag;
 	if(_hWnd) PostMessageW(_hWnd, WM_COMMAND, MAKEWPARAM(sender.tag, 0), 0);
 }
+
+// As MFC does on WM_INITMENUPOPUP for frame menus: update each item, and disable commands nobody handles.
+- (void)menuNeedsUpdate:(NSMenu *)menu
+{
+	auto *frame = dynamic_cast<CFrameWnd *>(CWnd::FromHandlePermanent(_hWnd));
+	if(!frame) return;
+	for(NSMenuItem *item in menu.itemArray)
+	{
+		if(item.submenu || item.isSeparatorItem || item.tag == 0) continue;
+		MacMenuCmdUI ui;
+		ui.m_nID = (UINT)item.tag;
+		ui.item = item;
+		ui.DoUpdate(frame, TRUE);
+	}
+}
 @end
 
 static NSMenu *BuildNSMenu(HMENU hMenu, NSString *title, MPTMenuTarget *target)
 {
 	NSMenu *menu = [[NSMenu alloc] initWithTitle:title];
 	menu.autoenablesItems = NO;
+	menu.delegate = target;
 	for(const MacMenuItem &item : hMenu->items)
 	{
 		if(item.flags & MF_SEPARATOR)
@@ -2705,9 +2737,33 @@ BOOL WINAPI SHGetSpecialFolderPathW(HWND hwnd, LPWSTR pszPath, int csidl, BOOL f
 }
 
 // The ITEMIDLIST we hand out is just a NUL-terminated wide path after the size header.
+// The browse callback picks the start folder by sending BFFM_SETSELECTION to the dialog; this window records it.
+static std::wstring g_browseSelection;
+static LRESULT CALLBACK BrowseSelectionProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	if(msg == BFFM_SETSELECTIONW && wParam && lParam) g_browseSelection = reinterpret_cast<LPCWSTR>(lParam);
+	return msg == BFFM_SETSELECTIONW ? 0 : DefWindowProcW(hWnd, msg, wParam, lParam);
+}
+
 LPITEMIDLIST WINAPI SHBrowseForFolderW(LPBROWSEINFOW lpbi)
 {
+	g_browseSelection.clear();
+	if(lpbi && lpbi->lpfn)
+	{
+		static const bool registered = [] {
+			WNDCLASSW wc{};
+			wc.lpfnWndProc = BrowseSelectionProc;
+			wc.lpszClassName = L"MacBrowseForFolder";
+			return RegisterClassW(&wc) != 0;
+		}();
+		if(HWND hWnd = registered ? CreateWindowExW(0, L"MacBrowseForFolder", L"", WS_POPUP, 0, 0, 1, 1, nullptr, nullptr, nullptr, nullptr) : nullptr)
+		{
+			lpbi->lpfn(hWnd, BFFM_INITIALIZED, 0, lpbi->lParam);
+			DestroyWindow(hWnd);
+		}
+	}
 	NSOpenPanel *panel = [NSOpenPanel openPanel];
+	if(!g_browseSelection.empty()) panel.directoryURL = [NSURL fileURLWithPath:W2NS(g_browseSelection.c_str()) isDirectory:YES];
 	panel.canChooseFiles = NO;
 	panel.canChooseDirectories = YES;
 	panel.canCreateDirectories = YES;

@@ -26,6 +26,17 @@ static HWND s_focusHwnd = nullptr;
 }
 @end
 
+@interface MPTAXItem : NSAccessibilityElement
+@property (copy) void (^press)(void);
+@end
+
+@implementation MPTAXItem
+- (BOOL)accessibilityPerformPress {
+    if (self.press) self.press();
+    return self.press != nil;
+}
+@end
+
 @interface MPTNSWindow : NSWindow <NSWindowDelegate> {
 @public
     HWND _hWnd;
@@ -109,11 +120,161 @@ bool MacHandleKeyEvent(NSEvent* event) {
     return YES;
 }
 
-// Group boxes are created after the controls they frame, so they sit on top; like Windows, let clicks through.
+// Like Windows (HTTRANSPARENT), group boxes let clicks through to the controls they frame.
 - (NSView *)hitTest:(NSPoint)point {
     WindowRecord* rec = GetWindowRecord(_hWnd);
     if (rec && strcasecmp(rec->className.c_str(), "BUTTON") == 0 && (rec->style & BS_TYPEMASK) == BS_GROUPBOX) return nil;
     return [super hitTest:point];
+}
+
+static NSString* ToNSString(LPCTSTR lpsz);
+
+// Accessibility: the controls are drawn by hand, so each view reports a role from its Win32 class.
+static NSString* AXRole(HWND hWnd) {
+    WindowRecord* rec = GetWindowRecord(hWnd);
+    if (!rec) return nil;
+    const char* c = rec->className.c_str();
+    if (!strcasecmp(c, "BUTTON")) {
+        switch (rec->style & BS_TYPEMASK) {
+        case BS_GROUPBOX: return NSAccessibilityGroupRole;
+        case BS_CHECKBOX: case BS_AUTOCHECKBOX: case BS_3STATE: case BS_AUTO3STATE: return NSAccessibilityCheckBoxRole;
+        case BS_RADIOBUTTON: case BS_AUTORADIOBUTTON: return NSAccessibilityRadioButtonRole;
+        default: return NSAccessibilityButtonRole;
+        }
+    }
+    if (!strcasecmp(c, "EDIT")) return NSAccessibilityTextFieldRole;
+    if (!strcasecmp(c, "STATIC")) return NSAccessibilityStaticTextRole;
+    if (!strcasecmp(c, "LISTBOX")) return NSAccessibilityListRole;
+    if (!strcasecmp(c, "COMBOBOX")) return NSAccessibilityPopUpButtonRole;
+    if (!strcasecmp(c, "msctls_trackbar32")) return NSAccessibilitySliderRole;
+    if (!strcasecmp(c, "SysTabControl32")) return NSAccessibilityTabGroupRole;
+    return nil;
+}
+
+static NSString* AXWindowText(HWND hWnd) {
+    std::wstring text((size_t)std::max(0, ::GetWindowTextLengthW(hWnd)), L'\0');
+    if (!text.empty()) ::GetWindowTextW(hWnd, text.data(), (int)text.size() + 1);
+    std::erase(text, L'&');  // mnemonic markers
+    return ToNSString(text.c_str());
+}
+
+// A click at the middle of a rectangle, through the control's own mouse handling.
+static void AXClick(HWND hWnd, const RECT& rc) {
+    const LPARAM pt = MAKELPARAM((rc.left + rc.right) / 2, (rc.top + rc.bottom) / 2);
+    ::SendMessageW(hWnd, WM_LBUTTONDOWN, MK_LBUTTON, pt);
+    ::SendMessageW(hWnd, WM_LBUTTONUP, 0, pt);
+}
+
+- (BOOL)isAccessibilityElement {
+    return AXRole(_hWnd) != nil;
+}
+
+- (NSString *)accessibilityRole {
+    return AXRole(_hWnd) ?: [super accessibilityRole];
+}
+
+- (NSString *)accessibilityLabel {
+    NSString* role = AXRole(_hWnd);
+    if (!role || role == NSAccessibilityTextFieldRole || role == NSAccessibilityListRole) return [super accessibilityLabel];
+    return AXWindowText(_hWnd);
+}
+
+- (id)accessibilityValue {
+    NSString* role = AXRole(_hWnd);
+    if (role == NSAccessibilityCheckBoxRole || role == NSAccessibilityRadioButtonRole) return @(::SendMessageW(_hWnd, BM_GETCHECK, 0, 0));
+    if (role == NSAccessibilityTextFieldRole || role == NSAccessibilityStaticTextRole) return AXWindowText(_hWnd);
+    if (role == NSAccessibilitySliderRole) return @(::SendMessageW(_hWnd, TBM_GETPOS, 0, 0));
+    if (role == NSAccessibilityPopUpButtonRole) {
+        const int sel = (int)::SendMessageW(_hWnd, CB_GETCURSEL, 0, 0);
+        if (sel < 0) return @"";
+        std::wstring text((size_t)std::max<LRESULT>(0, ::SendMessageW(_hWnd, CB_GETLBTEXTLEN, sel, 0)), L'\0');
+        if (!text.empty()) ::SendMessageW(_hWnd, CB_GETLBTEXT, sel, (LPARAM)text.data());
+        return ToNSString(text.c_str());
+    }
+    return [super accessibilityValue];
+}
+
+static std::wstring AXWide(id value) {
+    NSData* data = [[value description] dataUsingEncoding:NSUTF32LittleEndianStringEncoding];
+    return std::wstring((const wchar_t*)data.bytes, data.length / sizeof(wchar_t));
+}
+
+// Typing through accessibility (VoiceOver, automation) edits the field as the keyboard would.
+- (void)setAccessibilityValue:(id)value {
+    if (AXRole(_hWnd) != NSAccessibilityTextFieldRole) return [super setAccessibilityValue:value];
+    ::SetWindowTextW(_hWnd, AXWide(value).c_str());
+}
+
+- (void)setAccessibilitySelectedText:(NSString *)text {
+    if (AXRole(_hWnd) != NSAccessibilityTextFieldRole) return [super setAccessibilitySelectedText:text];
+    ::SendMessageW(_hWnd, EM_REPLACESEL, TRUE, (LPARAM)AXWide(text).c_str());
+}
+
+- (BOOL)isAccessibilityEnabled {
+    WindowRecord* rec = GetWindowRecord(_hWnd);
+    return !rec || rec->isEnabled;
+}
+
+- (BOOL)accessibilityPerformPress {
+    NSString* role = AXRole(_hWnd);
+    if (!role || ![self isAccessibilityEnabled]) return NO;
+    if ([role isEqualToString:NSAccessibilityButtonRole] || role == NSAccessibilityCheckBoxRole || role == NSAccessibilityRadioButtonRole) {
+        ::SendMessageW(_hWnd, BM_CLICK, 0, 0);
+    } else {
+        RECT rc;
+        ::GetClientRect(_hWnd, &rc);
+        AXClick(_hWnd, rc);
+    }
+    return YES;
+}
+
+// List rows and tabs are not windows, so they are reported as child elements that press by clicking.
+- (NSArray *)accessibilityChildren {
+    NSString* role = AXRole(_hWnd);
+    const bool list = role == NSAccessibilityListRole, tabs = role == NSAccessibilityTabGroupRole;
+    if (!list && !tabs) return [super accessibilityChildren];
+    NSMutableArray* items = [NSMutableArray array];
+    const int count = (int)::SendMessageW(_hWnd, list ? LB_GETCOUNT : TCM_GETITEMCOUNT, 0, 0);
+    const int sel = (int)::SendMessageW(_hWnd, list ? LB_GETCURSEL : TCM_GETCURSEL, 0, 0);
+    auto* checks = list ? dynamic_cast<CCheckListBox*>(CWnd::FromHandlePermanent(_hWnd)) : nullptr;
+    RECT client;
+    ::GetClientRect(_hWnd, &client);
+    for (int i = 0; i < count; i++) {
+        RECT rc{};
+        std::wstring text;
+        if (list) {
+            ::SendMessageW(_hWnd, LB_GETITEMRECT, i, (LPARAM)&rc);
+            text.assign((size_t)std::max<LRESULT>(0, ::SendMessageW(_hWnd, LB_GETTEXTLEN, i, 0)), L'\0');
+            if (!text.empty()) ::SendMessageW(_hWnd, LB_GETTEXT, i, (LPARAM)text.data());
+        } else {
+            ::SendMessageW(_hWnd, TCM_GETITEMRECT, i, (LPARAM)&rc);
+            wchar_t buf[256] = {};
+            TCITEMW item{};
+            item.mask = TCIF_TEXT;
+            item.pszText = buf;
+            item.cchTextMax = 255;
+            ::SendMessageW(_hWnd, TCM_GETITEMW, i, (LPARAM)&item);
+            text = buf;
+        }
+        RECT visible;
+        if (!::IntersectRect(&visible, &rc, &client)) continue;  // scrolled out of view
+        MPTAXItem* element = [[MPTAXItem alloc] init];
+        element.accessibilityParent = self;
+        element.accessibilityRole = checks ? NSAccessibilityCheckBoxRole : list ? NSAccessibilityStaticTextRole : NSAccessibilityRadioButtonRole;
+        if (checks) element.accessibilityValue = @(checks->GetCheck(i));
+        element.accessibilityLabel = ToNSString(text.c_str());
+        element.accessibilitySelected = i == sel;
+        // The parent space is bottom-up even though the view is flipped.
+        element.accessibilityFrameInParentSpace = NSMakeRect(visible.left, self.bounds.size.height - visible.bottom, visible.right - visible.left, visible.bottom - visible.top);
+        HWND hWnd = _hWnd;
+        RECT target = visible;
+        // Check list rows press their check box, which toggles it; other rows press their text, which selects.
+        if (checks) target.right = std::min<LONG>(target.right, target.left + 14);
+        else if (list) target.left = std::min<LONG>(target.right, target.left + 20);
+        element.press = ^{ AXClick(hWnd, target); };
+        [items addObject:element];
+    }
+    return items;
 }
 
 - (void)updateTrackingAreas {
@@ -412,7 +573,8 @@ HWND CreateNativeHWND(CWnd* pWnd, DWORD dwExStyle, LPCTSTR lpClassName, LPCTSTR 
         rec.nsView.hidden = !rec.isVisible;
         WindowRecord* parentRec = GetWindowRecord(hWndParent);
         if (parentRec && parentRec->nsView) {
-            [parentRec->nsView addSubview:rec.nsView];
+            // Win32 links new children at the bottom of the z-order, so a dialog's first control is on top.
+            [parentRec->nsView addSubview:rec.nsView positioned:NSWindowBelow relativeTo:nil];
             parentRec->children.push_back(hWnd);
         }
     }
@@ -510,6 +672,8 @@ BOOL WINAPI DestroyWindow(HWND hWnd) {
         rec->nsView = nil;
     }
     if (rec->nsWindow) {
+        // The owner keeps child windows alive until they are detached.
+        if (NSWindow* owner = [rec->nsWindow parentWindow]) [owner removeChildWindow:rec->nsWindow];
         [rec->nsWindow close];
         rec->nsWindow = nil;
     }
@@ -1696,41 +1860,65 @@ IMPLEMENT_DYNAMIC(CFileDialog, CCommonDialog)
 CFileDialog::CFileDialog(BOOL bOpenFileDialog, LPCTSTR lpszDefExt, LPCTSTR lpszFileName,
                          DWORD dwFlags, LPCTSTR lpszFilter, CWnd* pParentWnd, DWORD dwSize, BOOL bVistaStyle)
     : m_bOpenFileDialog(bOpenFileDialog) {
-    (void)dwFlags; (void)dwSize; (void)bVistaStyle;
+    (void)dwSize; (void)bVistaStyle;
+    m_ofn.Flags = dwFlags;
     if (lpszDefExt) m_strDefExt = lpszDefExt;
     if (lpszFileName) m_strFileName = lpszFileName;
     if (lpszFilter) m_strFilter = lpszFilter;
 }
 
+static CString FromNSString(NSString* s) {
+    NSData* data = [s dataUsingEncoding:NSUTF32LittleEndianStringEncoding];
+    return CString(std::wstring((const wchar_t*)data.bytes, data.length / sizeof(wchar_t)).c_str());
+}
+
 INT_PTR CFileDialog::DoModal() {
+    NSSavePanel* panel;
+    // A file name with a folder (OpenMPT passes full paths) starts the panel in that folder.
+    std::wstring name = m_strFileName.GetString(), folder = m_ofn.lpstrInitialDir ? m_ofn.lpstrInitialDir : L"";
+    if (const size_t slash = name.rfind(L'/'); slash != std::wstring::npos) {
+        if (folder.empty()) folder = name.substr(0, slash);
+        name.erase(0, slash + 1);
+    }
     if (m_bOpenFileDialog) {
-        NSOpenPanel* panel = [NSOpenPanel openPanel];
-        panel.canChooseFiles = YES;
-        panel.canChooseDirectories = NO;
-        panel.allowsMultipleSelection = (m_ofn.Flags & OFN_ALLOWMULTISELECT) != 0;
-        // Only offer files the caller's filter accepts (OpenMPT passes every format it can load).
-        // shortcut: prefix patterns like "mod.*" are not expressible as a UTType, so such files are greyed out; add a panel delegate if users need them.
-        NSMutableArray<UTType*>* types = [NSMutableArray array];
-        for (const auto& ext : MacFilterExtensions(std::wstring(m_strFilter.GetString()))) {
-            if (UTType* type = [UTType typeWithFilenameExtension:ToNSString(ext.c_str())]) [types addObject:type];
+        NSOpenPanel* open = [NSOpenPanel openPanel];
+        open.canChooseFiles = !m_bPickFoldersMode;
+        open.canChooseDirectories = m_bPickFoldersMode;
+        open.canCreateDirectories = m_bPickFoldersMode;
+        open.allowsMultipleSelection = !m_bPickFoldersMode && (m_ofn.Flags & OFN_ALLOWMULTISELECT) != 0;
+        if (!m_bPickFoldersMode) {
+            // Only offer files the caller's filter accepts (OpenMPT passes every format it can load).
+            // shortcut: prefix patterns like "mod.*" are not expressible as a UTType, so such files are greyed out; add a panel delegate if users need them.
+            NSMutableArray<UTType*>* types = [NSMutableArray array];
+            for (const auto& ext : MacFilterExtensions(std::wstring(m_strFilter.GetString()))) {
+                if (UTType* type = [UTType typeWithFilenameExtension:ToNSString(ext.c_str())]) [types addObject:type];
+            }
+            if (types.count > 0) open.allowedContentTypes = types;
+        } else if (folder.empty()) {
+            folder = m_strFileName.GetString();  // the folder picker is given the current folder as its file name
         }
-        if (types.count > 0) panel.allowedContentTypes = types;
-        if ([panel runModal] == NSModalResponseOK) {
-            NSURL* url = [[panel URLs] firstObject];
-            m_strFileName = [[url path] UTF8String];
-            return IDOK;
-        }
+        panel = open;
     } else {
-        NSSavePanel* panel = [NSSavePanel savePanel];
-        if (!m_strFileName.IsEmpty()) {
-            panel.nameFieldStringValue = ToNSString(m_strFileName.GetString());
-        }
-        if ([panel runModal] == NSModalResponseOK) {
-            m_strFileName = [[[panel URL] path] UTF8String];
-            return IDOK;
+        panel = [NSSavePanel savePanel];
+        if (!name.empty()) panel.nameFieldStringValue = ToNSString(name.c_str());
+        // The save panel adds the default extension when the user leaves it out, as OFN's lpstrDefExt does.
+        if (!m_strDefExt.IsEmpty()) {
+            if (UTType* type = [UTType typeWithFilenameExtension:ToNSString(m_strDefExt.GetString())]) {
+                panel.allowedContentTypes = @[type];
+                panel.allowsOtherFileTypes = YES;
+            }
         }
     }
-    return IDCANCEL;
+    if (!folder.empty()) panel.directoryURL = [NSURL fileURLWithPath:ToNSString(folder.c_str()) isDirectory:YES];
+    if (m_ofn.lpstrTitle && *m_ofn.lpstrTitle) panel.message = ToNSString(m_ofn.lpstrTitle);
+    if ([panel runModal] != NSModalResponseOK) return IDCANCEL;
+
+    m_paths.clear();
+    NSArray<NSURL*>* urls = m_bOpenFileDialog ? ((NSOpenPanel*)panel).URLs : @[panel.URL];
+    for (NSURL* url in urls) m_paths.push_back(FromNSString(url.path));
+    if (m_paths.empty()) return IDCANCEL;
+    m_strFileName = m_paths.front();
+    return IDOK;
 }
 
 CString CFileDialog::GetPathName() const { return m_strFileName; }
@@ -1747,8 +1935,14 @@ CString CFileDialog::GetFileTitle() const {
     int pos = fn.ReverseFind('.');
     return (pos >= 0) ? fn.Left(pos) : fn;
 }
-POSITION CFileDialog::GetStartPosition() const { return (POSITION)(uintptr_t)1; }
-CString CFileDialog::GetNextPathName(POSITION& pos) const { pos = nullptr; return m_strFileName; }
+// POSITION is the 1-based index of the next path, as an opaque handle.
+POSITION CFileDialog::GetStartPosition() const { return m_paths.empty() ? nullptr : (POSITION)(uintptr_t)1; }
+CString CFileDialog::GetNextPathName(POSITION& pos) const {
+    const size_t i = (uintptr_t)pos - 1;
+    if (i >= m_paths.size()) { pos = nullptr; return CString(); }
+    pos = (i + 1 < m_paths.size()) ? (POSITION)(uintptr_t)(i + 2) : nullptr;
+    return m_paths[i];
+}
 
 // CColorDialog
 IMPLEMENT_DYNAMIC(CColorDialog, CCommonDialog)
@@ -2840,9 +3034,17 @@ CPropertyPage::CPropertyPage(UINT nIDTemplate, UINT nIDCaption, DWORD dwSize)
     : CDialog(nIDTemplate) {}
 CPropertyPage::CPropertyPage(LPCTSTR lpszTemplateName, UINT nIDCaption, DWORD dwSize)
     : CDialog(lpszTemplateName) {}
-// shortcut: only ever enables Apply (applying disables it again); MFC also tracks each page to undo SetModified(FALSE).
+// As in MFC, Apply is enabled while any page has unapplied changes.
 void CPropertyPage::SetModified(BOOL bChanged) {
-    if (bChanged && m_pSheet && m_pSheet->m_hWnd) ::EnableWindow(::GetDlgItem(m_pSheet->m_hWnd, ID_APPLY_NOW), TRUE);
+    m_bModified = bChanged;
+    if (m_pSheet) m_pSheet->UpdateApply();
+}
+
+void CPropertySheet::UpdateApply() {
+    if (!m_hWnd) return;
+    bool modified = false;
+    for (CPropertyPage* page : m_pages) modified |= page->m_bModified;
+    ::EnableWindow(::GetDlgItem(m_hWnd, ID_APPLY_NOW), modified);
 }
 
 CPropertySheet::CPropertySheet() {}
@@ -2926,6 +3128,8 @@ bool CPropertySheet::ShowPage(int nPage) {
         pageDef.style = (def->style & ~(WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_DISABLED | WS_VISIBLE)) | WS_CHILD;
         pageDef.x = pageDef.y = 0;
         if (!CreateDialogFromTemplate(next, pageDef, m_hWnd)) return false;
+        next->m_bModified = false;  // controls filled in by OnInitDialog are not user changes
+        UpdateApply();
         ::MoveWindow(next->m_hWnd, 2 * kSheetMargin + kSheetListWidth, kSheetMargin, DluToPixelsX(def->cx), DluToPixelsY(def->cy), FALSE);
     }
     if (cur && cur->m_hWnd) cur->ShowWindow(SW_HIDE);
@@ -2941,8 +3145,9 @@ bool CPropertySheet::ApplyPages() {
     if (CPropertyPage* cur = GetActivePage(); cur && cur->m_hWnd && !cur->OnKillActive()) return false;
     for (CPropertyPage* page : m_pages) {
         if (page->m_hWnd && !page->OnApply()) return false;
+        page->m_bModified = false;
     }
-    ::EnableWindow(::GetDlgItem(m_hWnd, ID_APPLY_NOW), FALSE);
+    UpdateApply();
     return true;
 }
 

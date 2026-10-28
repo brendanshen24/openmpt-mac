@@ -6,6 +6,7 @@
 #import <ImageIO/ImageIO.h>
 #include <cmath>
 #include <algorithm>
+#include <map>
 
 #import "MacGDI.h"
 #import "MacResources.h"
@@ -284,8 +285,15 @@ HBRUSH WINAPI CreateSolidBrush(COLORREF crColor) {
     return (HBRUSH)br;
 }
 
+// System brushes are shared and never deleted by callers, as on Windows.
 HBRUSH WINAPI GetSysColorBrush(int nIndex) {
-    return CreateSolidBrush(GetSysColor(nIndex));
+    static std::map<int, MacBrush*> brushes;
+    MacBrush*& brush = brushes[nIndex];
+    if (!brush) {
+        brush = (MacBrush*)CreateSolidBrush(GetSysColor(nIndex));
+        brush->isStock = true;
+    }
+    return (HBRUSH)brush;
 }
 
 HPEN WINAPI CreatePen(int iStyle, int cWidth, COLORREF color) {

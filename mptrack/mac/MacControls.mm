@@ -1140,7 +1140,7 @@ LRESULT CALLBACK EditProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		return MAKELRESULT(a, b);
 	}
 	case EM_REPLACESEL:
-		ReplaceSelection(hWnd, ed, lParam ? (LPCWSTR)lParam : L"", false);
+		ReplaceSelection(hWnd, ed, lParam ? (LPCWSTR)lParam : L"", true);  // Windows notifies EN_CHANGE here too
 		return 0;
 	case EM_LIMITTEXT:
 		ed.limit = wParam ? (int)wParam : 0x7FFFFFFE;

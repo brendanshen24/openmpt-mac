@@ -20,6 +20,7 @@ public:
     CString m_strFileName;
     CString m_strDefExt;
     std::vector<TCHAR> m_fileBuf;
+    std::vector<CString> m_paths;  // every file chosen in a multi-selection
 
     explicit CFileDialog(BOOL bOpenFileDialog, LPCTSTR lpszDefExt = nullptr,
                          LPCTSTR lpszFileName = nullptr,
@@ -90,6 +91,7 @@ public:
     PROPSHEETPAGE m_psp{};
     CString m_strCaption;
     CPropertySheet* m_pSheet = nullptr;
+    bool m_bModified = false;
 
     CPropertyPage();
     explicit CPropertyPage(UINT nIDTemplate, UINT nIDCaption = 0, DWORD dwSize = sizeof(PROPSHEETPAGE));
@@ -132,6 +134,7 @@ public:
     void Construct(LPCTSTR pszCaption, CWnd* pParentWnd = nullptr, UINT iSelectPage = 0);
 
     virtual BOOL Create(CWnd* pParentWnd = nullptr, DWORD dwStyle = (DWORD)-1, DWORD dwExStyle = 0);
+    void UpdateApply();  // enables Apply while any page has unapplied changes
     virtual INT_PTR DoModal();
     virtual BOOL OnInitDialog();
 

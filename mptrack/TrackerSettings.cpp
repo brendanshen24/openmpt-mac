@@ -1466,7 +1466,7 @@ mpt::PathString TrackerSettings::GetDefaultAutosavePath()
 		{
 			path = mpt::common_directories::get_temp_directory();
 		}
-		path = path.WithTrailingSlash() + P_("OpenMPT\\");
+		path = (path.WithTrailingSlash() + P_("OpenMPT")).WithTrailingSlash();
 	}
 	return path + P_("Autosave");
 }
