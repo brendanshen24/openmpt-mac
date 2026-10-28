@@ -109,6 +109,13 @@ bool MacHandleKeyEvent(NSEvent* event) {
     return YES;
 }
 
+// Group boxes are created after the controls they frame, so they sit on top; like Windows, let clicks through.
+- (NSView *)hitTest:(NSPoint)point {
+    WindowRecord* rec = GetWindowRecord(_hWnd);
+    if (rec && strcasecmp(rec->className.c_str(), "BUTTON") == 0 && (rec->style & BS_TYPEMASK) == BS_GROUPBOX) return nil;
+    return [super hitTest:point];
+}
+
 - (void)updateTrackingAreas {
     [super updateTrackingAreas];
     if (_trackingArea) [self removeTrackingArea:_trackingArea];
@@ -1438,6 +1445,11 @@ BOOL CWnd::OnWndMsg(UINT message, WPARAM wParam, LPARAM lParam, LRESULT* pResult
         auto* dis = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
         if (auto* button = dynamic_cast<CButton*>(CWnd::FromHandlePermanent(dis->hwndItem))) {
             button->DrawItem(dis);
+            result = TRUE;
+            return TRUE;
+        }
+        if (auto* list = dynamic_cast<CListBox*>(CWnd::FromHandlePermanent(dis->hwndItem))) {
+            list->DrawItem(dis);
             result = TRUE;
             return TRUE;
         }

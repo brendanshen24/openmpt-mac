@@ -2566,7 +2566,7 @@ LRESULT CALLBACK ListBoxProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case LB_GETITEMHEIGHT:
 		return ListBoxItemHeight(hWnd, lb);
 	case LB_SETITEMHEIGHT:
-		lb.itemHeight = std::max<int>(1, LOWORD(lParam));
+		lb.itemHeight = LOWORD(lParam);  // 0 measures again (OpenMPT uses it to force a recompute)
 		InvalidateRect(hWnd, nullptr, FALSE);
 		return 0;
 	case LB_GETITEMRECT:

@@ -1399,6 +1399,8 @@ class CCheckListBox : public CListBox {
 public:
     void SetCheck(int nIndex, int nCheck);
     int GetCheck(int nIndex) const;
+    void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) override;
+    LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam) override;
     void Enable(int nIndex, BOOL bEnabled = TRUE);
     BOOL IsEnabled(int nIndex) const;
 };

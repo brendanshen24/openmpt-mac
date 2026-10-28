@@ -1483,11 +1483,18 @@ void PaintButton(HWND hWnd, ButtonData &bd)
 		EndPaint(hWnd, &ps);
 		return;
 	}
+	if(type == BS_GROUPBOX)
+	{
+		// Only the frame and caption: the inside shows the controls underneath, as on Windows.
+		SetBkMode(dc, TRANSPARENT);
+		SelectObject(dc, ControlFont(hWnd));
+		PaintGroupBox(hWnd, dc, client, enabled);
+		EndPaint(hWnd, &ps);
+		return;
+	}
 	PrepareControlDC(hWnd, dc, WM_CTLCOLORBTN, client, GetSysColor(COLOR_BTNFACE));
 	const bool pushLike = rec && (rec->style & BS_PUSHLIKE);
-	if(type == BS_GROUPBOX)
-		PaintGroupBox(hWnd, dc, client, enabled);
-	else if((IsCheckType(type) || IsRadioType(type)) && !pushLike)
+	if((IsCheckType(type) || IsRadioType(type)) && !pushLike)
 		PaintCheckOrRadio(hWnd, dc, client, bd, IsRadioType(type), enabled);
 	else
 		PaintPushButton(hWnd, dc, client, bd, type == BS_DEFPUSHBUTTON, enabled, bd.pushed || (pushLike && bd.check == BST_CHECKED));

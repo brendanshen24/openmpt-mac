@@ -1398,6 +1398,70 @@ int CCheckListBox::GetCheck(int nIndex) const
 	return (nIndex >= 0 && (size_t)nIndex < m_checks.size()) ? m_checks[nIndex] : 0;
 }
 
+static constexpr int kCheckListBoxSize = 13;
+
+// A check box at the left of each row, then the item text, as MFC's CCheckListBox draws it.
+void CCheckListBox::DrawItem(LPDRAWITEMSTRUCT dis)
+{
+	if(dis->itemID == (UINT)-1) return;
+	HDC dc = dis->hDC;
+	const RECT &row = dis->rcItem;
+	const bool selected = dis->itemState & ODS_SELECTED, enabled = !(dis->itemState & ODS_DISABLED);
+	auto fill = [dc](const RECT &rect, int color, bool frame) {
+		HBRUSH brush = CreateSolidBrush(GetSysColor(color));
+		frame ? FrameRect(dc, &rect, brush) : FillRect(dc, &rect, brush);
+		DeleteObject(brush);
+	};
+	fill(row, selected ? COLOR_HIGHLIGHT : COLOR_WINDOW, false);
+
+	const int size = std::min<int>(kCheckListBoxSize, row.bottom - row.top - 2);
+	const int top = row.top + (row.bottom - row.top - size) / 2;
+	RECT box{row.left + 2, top, row.left + 2 + size, top + size};
+	fill(box, COLOR_WINDOW, false);
+	fill(box, enabled ? COLOR_WINDOWTEXT : COLOR_GRAYTEXT, true);
+	if(GetCheck((int)dis->itemID))
+	{
+		HPEN pen = CreatePen(PS_SOLID, 2, GetSysColor(enabled ? COLOR_WINDOWTEXT : COLOR_GRAYTEXT));
+		// Swap the field directly: SelectObject ignores a null pen, which would leave the deleted pen selected.
+		HPEN oldPen = dc->currentPen;
+		dc->currentPen = pen;
+		MoveToEx(dc, box.left + 3, box.top + size / 2, nullptr);
+		LineTo(dc, box.left + size / 2 - 1, box.bottom - 4);
+		LineTo(dc, box.right - 3, box.top + 3);
+		dc->currentPen = oldPen;
+		DeleteObject(pen);
+	}
+
+	std::wstring text((size_t)std::max<LRESULT>(0, ::SendMessageW(m_hWnd, LB_GETTEXTLEN, dis->itemID, 0)), L'\0');
+	if(!text.empty()) ::SendMessageW(m_hWnd, LB_GETTEXT, dis->itemID, (LPARAM)text.data());
+	SetBkMode(dc, TRANSPARENT);
+	SetTextColor(dc, GetSysColor(!enabled ? COLOR_GRAYTEXT : selected ? COLOR_HIGHLIGHTTEXT : COLOR_WINDOWTEXT));
+	RECT textRect{box.right + 4, row.top, row.right - 2, row.bottom};
+	DrawTextW(dc, text.c_str(), (int)text.size(), &textRect, DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
+}
+
+// A click on the check box or Space toggles the item and sends CLBN_CHKCHANGE to the parent, as in MFC.
+LRESULT CCheckListBox::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
+{
+	int toggle = -1;
+	if((message == WM_LBUTTONDOWN || message == WM_LBUTTONDBLCLK) && GET_X_LPARAM(lParam) < kCheckListBoxSize + 4)
+	{
+		const DWORD hit = (DWORD)::SendMessageW(m_hWnd, LB_ITEMFROMPOINT, 0, lParam);
+		if(!HIWORD(hit)) toggle = LOWORD(hit);
+	} else if(message == WM_CHAR && wParam == ' ')
+	{
+		toggle = GetCurSel();
+		if(toggle < 0) return 0;
+	}
+	const LRESULT result = (message == WM_CHAR && toggle >= 0) ? 0 : CListBox::WindowProc(message, wParam, lParam);
+	if(toggle >= 0 && m_hWnd)
+	{
+		SetCheck(toggle, GetCheck(toggle) ? 0 : 1);
+		if(HWND parent = ::GetParent(m_hWnd)) ::SendMessageW(parent, WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(), CLBN_CHKCHANGE), (LPARAM)m_hWnd);
+	}
+	return result;
+}
+
 static std::map<std::pair<HWND, int>, LONG_PTR> g_extraWindowLongs;
 
 LONG_PTR WINAPI GetWindowLongPtrW(HWND hWnd, int nIndex)
