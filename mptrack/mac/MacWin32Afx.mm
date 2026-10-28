@@ -120,7 +120,7 @@ bool MacHandleKeyEvent(NSEvent* event) {
     return YES;
 }
 
-// Like Windows (HTTRANSPARENT), group boxes let clicks through to the controls they frame.
+// Group boxes are created after the controls they frame, so they sit on top; like Windows, let clicks through.
 - (NSView *)hitTest:(NSPoint)point {
     WindowRecord* rec = GetWindowRecord(_hWnd);
     if (rec && strcasecmp(rec->className.c_str(), "BUTTON") == 0 && (rec->style & BS_TYPEMASK) == BS_GROUPBOX) return nil;
@@ -573,8 +573,9 @@ HWND CreateNativeHWND(CWnd* pWnd, DWORD dwExStyle, LPCTSTR lpClassName, LPCTSTR 
         rec.nsView.hidden = !rec.isVisible;
         WindowRecord* parentRec = GetWindowRecord(hWndParent);
         if (parentRec && parentRec->nsView) {
-            // Win32 links new children at the bottom of the z-order, so a dialog's first control is on top.
-            [parentRec->nsView addSubview:rec.nsView positioned:NSWindowBelow relativeTo:nil];
+            // shortcut: newer children stack on top, the reverse of a Win32 dialog's z-order; OpenMPT's views
+            // rely on later children covering earlier ones, so only group boxes (see hitTest) are special-cased.
+            [parentRec->nsView addSubview:rec.nsView];
             parentRec->children.push_back(hWnd);
         }
     }

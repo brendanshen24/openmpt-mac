@@ -865,6 +865,7 @@ struct EditData
 	int scroll = 0;
 	int topLine = 0;  // ES_MULTILINE: first visible line
 	bool focused = false;
+	bool modified = false;  // EM_GETMODIFY: set by edits, cleared by WM_SETTEXT
 };
 
 std::map<HWND, EditData> g_edits;
@@ -896,6 +897,7 @@ void ReplaceSelection(HWND hWnd, EditData &ed, const std::wstring &insert, bool 
 	InvalidateRect(hWnd, nullptr, FALSE);
 	if(notify)
 	{
+		ed.modified = true;
 		NotifyParentCommand(hWnd, EN_UPDATE);
 		NotifyParentCommand(hWnd, EN_CHANGE);
 	}
@@ -1001,6 +1003,7 @@ LRESULT CALLBACK EditProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		const LRESULT r = DefWindowProcW(hWnd, msg, wParam, lParam);
 		ed.selStart = ed.selEnd = 0;
 		ed.scroll = ed.topLine = 0;
+		ed.modified = false;
 		InvalidateRect(hWnd, nullptr, FALSE);
 		NotifyParentCommand(hWnd, EN_CHANGE);  // Windows sends EN_CHANGE for WM_SETTEXT too
 		return r;
@@ -1152,7 +1155,10 @@ LRESULT CALLBACK EditProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		InvalidateRect(hWnd, nullptr, FALSE);
 		return TRUE;
 	case EM_GETMODIFY:
+		return ed.modified;
 	case EM_SETMODIFY:
+		ed.modified = wParam != 0;
+		return 0;
 	case EM_SETMARGINS:
 	case EM_SETCUEBANNER:
 		return 0;

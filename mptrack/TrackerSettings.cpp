@@ -325,7 +325,7 @@ TrackerSettings::TrackerSettings(SettingsContainer &conf)
 	, PathPlugins(conf, UL_("Paths"), UL_("Plugins_Directory"), mpt::PathString())
 	, PathPluginPresets(conf, UL_("Paths"), UL_("Plugin_Presets_Directory"), mpt::PathString())
 	, PathExport(conf, UL_("Paths"), UL_("Export_Directory"), mpt::PathString())
-	, PathTunings(theApp.GetConfigPath() + P_("tunings\\"))
+	, PathTunings((theApp.GetConfigPath() + P_("tunings")).WithTrailingSlash())
 	// Default template
 	, defaultTemplateFile(conf, UL_("Paths"), UL_("DefaultTemplate"), mpt::PathString())
 	, defaultArtist(conf, UL_("Misc"), UL_("DefaultArtist"), mpt::getenv(UL_("USERNAME")).value_or(UL_("")))
@@ -1042,16 +1042,16 @@ void TrackerSettings::MigrateTunings(const Version storedVersion)
 	{
 		CreateDirectory(PathTunings.GetDefaultDir().AsNative().c_str(), 0);
 	}
-	if(!mpt::native_fs{}.is_directory(PathTunings.GetDefaultDir() + P_("Built-in\\")))
+	if(!mpt::native_fs{}.is_directory((PathTunings.GetDefaultDir() + P_("Built-in")).WithTrailingSlash()))
 	{
-		CreateDirectory((PathTunings.GetDefaultDir() + P_("Built-in\\")).AsNative().c_str(), 0);
+		CreateDirectory(((PathTunings.GetDefaultDir() + P_("Built-in")).WithTrailingSlash()).AsNative().c_str(), 0);
 	}
-	if(!mpt::native_fs{}.is_directory(PathTunings.GetDefaultDir() + P_("Locale\\")))
+	if(!mpt::native_fs{}.is_directory((PathTunings.GetDefaultDir() + P_("Locale")).WithTrailingSlash()))
 	{
-		CreateDirectory((PathTunings.GetDefaultDir() + P_("Local\\")).AsNative().c_str(), 0);
+		CreateDirectory(((PathTunings.GetDefaultDir() + P_("Local")).WithTrailingSlash()).AsNative().c_str(), 0);
 	}
 	{
-		mpt::PathString fn = PathTunings.GetDefaultDir() + P_("Built-in\\12TET.tun");
+		mpt::PathString fn = (PathTunings.GetDefaultDir() + P_("Built-in")).WithTrailingSlash() + P_("12TET.tun");
 		if(!mpt::native_fs{}.exists(fn))
 		{
 			std::unique_ptr<CTuning> pT = CSoundFile::CreateTuning12TET(UL_("12TET"));
@@ -1060,7 +1060,7 @@ void TrackerSettings::MigrateTunings(const Version storedVersion)
 		}
 	}
 	{
-		mpt::PathString fn = PathTunings.GetDefaultDir() + P_("Built-in\\12TET [[fs15 1.17.02.49]].tun");
+		mpt::PathString fn = (PathTunings.GetDefaultDir() + P_("Built-in")).WithTrailingSlash() + P_("12TET [[fs15 1.17.02.49]].tun");
 		if(!mpt::native_fs{}.exists(fn))
 		{
 			std::unique_ptr<CTuning> pT = CSoundFile::CreateTuning12TET(UL_("12TET [[fs15 1.17.02.49]]"));
@@ -1071,7 +1071,7 @@ void TrackerSettings::MigrateTunings(const Version storedVersion)
 	oldLocalTunings = LoadLocalTunings();
 	if(storedVersion < MPT_V("1.27.00.56"))
 	{
-		UnpackTuningCollection(*oldLocalTunings, PathTunings.GetDefaultDir() + P_("Local\\"));
+		UnpackTuningCollection(*oldLocalTunings, (PathTunings.GetDefaultDir() + P_("Local")).WithTrailingSlash());
 	}
 }
 

@@ -41,7 +41,7 @@ WelcomeDlg::WelcomeDlg(CWnd *parent)
 
 static mpt::PathString GetFullKeyPath(const char *keyFile)
 {
-	return theApp.GetInstallPkgPath() + P_("extraKeymaps\\") + mpt::PathString::FromUTF8(keyFile) + P_(".mkb");
+	return (theApp.GetInstallPkgPath() + P_("extraKeymaps")).WithTrailingSlash() + mpt::PathString::FromUTF8(keyFile) + P_(".mkb");
 }
 
 

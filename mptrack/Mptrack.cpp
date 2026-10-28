@@ -1020,7 +1020,7 @@ void CTrackApp::SetupPaths(bool overridePortable)
 			|| (SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, dir) == S_OK))
 		{
 			// Store our app settings in %APPDATA% or "My Documents"
-			configPathUser = mpt::PathString::FromNative(dir) + P_("\\OpenMPT\\");
+			configPathUser = (mpt::PathString::FromNative(dir).WithTrailingSlash() + P_("OpenMPT")).WithTrailingSlash();
 		}
 	}
 
@@ -1081,7 +1081,7 @@ void CTrackApp::CreatePaths()
 		MoveConfigFile(P_("plugin.cache"));
 	
 		// Import old tunings
-		const mpt::PathString oldTunings = GetInstallPath() + P_("tunings\\");
+		const mpt::PathString oldTunings = (GetInstallPath() + P_("tunings")).WithTrailingSlash();
 
 		if(mpt::native_fs{}.is_directory(oldTunings))
 		{
@@ -1099,13 +1099,13 @@ void CTrackApp::CreatePaths()
 
 mpt::PathString CTrackApp::GetUserTemplatesPath() const
 {
-	return GetConfigPath() + P_("TemplateModules\\");
+	return (GetConfigPath() + P_("TemplateModules")).WithTrailingSlash();
 }
 
 
 mpt::PathString CTrackApp::GetExampleSongsPath() const
 {
-	return GetInstallPath() + P_("ExampleSongs\\");
+	return (GetInstallPath() + P_("ExampleSongs")).WithTrailingSlash();
 }
 
 
@@ -1860,7 +1860,7 @@ CModDoc *CTrackApp::NewDocument(MODTYPE newType)
 		if(TrackerSettings::Instance().defaultNewFileAction == nfDefaultTemplate && !templateFile.empty())
 		{
 			// Template file can be either a filename inside one of the preset and user TemplateModules folders, or a full path.
-			const mpt::PathString dirs[] = { GetUserTemplatesPath(), GetInstallPath() + P_("TemplateModules\\"), mpt::PathString() };
+			const mpt::PathString dirs[] = { GetUserTemplatesPath(), (GetInstallPath() + P_("TemplateModules")).WithTrailingSlash(), mpt::PathString() };
 			for(const auto &dir : dirs)
 			{
 				if(mpt::native_fs{}.is_file(dir + templateFile))
