@@ -1045,7 +1045,7 @@ LRESULT CALLBACK EditProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			InvalidateRect(hWnd, nullptr, FALSE);
 			return 0;
 		}
-		break;
+		return DefWindowProcW(hWnd, msg, wParam, lParam);
 	case WM_LBUTTONDBLCLK:
 		ed.selStart = 0;
 		ed.selEnd = len();
@@ -1237,6 +1237,21 @@ void PaintUpDown(HWND hWnd, UpDownData &ud)
 	EndPaint(hWnd, &ps);
 }
 
+// UDS_ALIGNRIGHT/UDS_ALIGNLEFT: like Windows, the spin takes the buddy's height and the buddy shrinks to make room.
+static void UpDownAlignToBuddy(HWND hWnd, const UpDownData &ud)
+{
+	WindowRecord *rec = GetWindowRecord(hWnd), *buddy = GetWindowRecord(ud.buddy);
+	if(!rec || !buddy || !(rec->style & (UDS_ALIGNRIGHT | UDS_ALIGNLEFT)) || GetParent(hWnd) != GetParent(ud.buddy))
+		return;
+	const RECT b = buddy->rect;
+	const int width = rec->rect.right - rec->rect.left;
+	if(b.right - b.left <= width)
+		return;
+	const bool right = (rec->style & UDS_ALIGNRIGHT) != 0;
+	SetWindowPos(ud.buddy, nullptr, right ? b.left : b.left + width, b.top, b.right - b.left - width, b.bottom - b.top, SWP_NOZORDER | SWP_NOACTIVATE);
+	SetWindowPos(hWnd, nullptr, right ? b.right - width : b.left, b.top, width, b.bottom - b.top, SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
 LRESULT CALLBACK UpDownProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	UpDownData &ud = g_upDowns[hWnd];
@@ -1246,6 +1261,7 @@ LRESULT CALLBACK UpDownProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 		// UDS_AUTOBUDDY: the previously created sibling becomes the buddy.
 		if(rec && (rec->style & UDS_AUTOBUDDY)) ud.buddy = GetWindow(hWnd, GW_HWNDPREV);
+		UpDownAlignToBuddy(hWnd, ud);
 		return 0;
 	case WM_NCDESTROY:
 		g_upDowns.erase(hWnd);
@@ -1302,6 +1318,7 @@ LRESULT CALLBACK UpDownProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		HWND old = ud.buddy;
 		ud.buddy = (HWND)wParam;
+		UpDownAlignToBuddy(hWnd, ud);
 		return (LRESULT)old;
 	}
 	case UDM_GETBUDDY:

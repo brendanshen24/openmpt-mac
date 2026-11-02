@@ -36,6 +36,9 @@ HDC WINAPI CreateCompatibleDC(HDC hdc) {
         newDC->bkMode = hdc->bkMode;
         newDC->currentFont = hdc->currentFont;
     }
+    // Like Windows, a new memory DC holds a 1x1 stock bitmap, so the first SelectObject returns something to restore.
+    static HBITMAP defaultBitmap = [] { HBITMAP b = CreateBitmap(1, 1, 1, 32, nullptr); b->isStock = true; return b; }();
+    SelectObject(newDC, defaultBitmap);
     return newDC;
 }
 

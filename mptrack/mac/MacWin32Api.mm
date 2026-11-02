@@ -1256,7 +1256,8 @@ LRESULT WINAPI DefWindowProcW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 	}
 	case WM_GETFONT:
-		return rec ? (LRESULT)rec->font : 0;
+		// Report the font controls actually draw with (MacControls falls back to DEFAULT_GUI_FONT); MFC callers expect non-null.
+		return rec ? (LRESULT)(rec->font ? rec->font : (HFONT)GetStockObject(DEFAULT_GUI_FONT)) : 0;
 	case WM_ERASEBKGND:
 	{
 		// Erase with the class background brush; COLOR_xxx + 1 values name system colours.
