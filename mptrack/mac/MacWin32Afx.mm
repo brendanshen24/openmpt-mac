@@ -852,6 +852,19 @@ BOOL WINAPI SendNotifyMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 BOOL WINAPI PeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg) {
     (void)hWnd; (void)wMsgFilterMin; (void)wMsgFilterMax;
+    // Work loops inside a modal dialog (CProgressDialog::ProcessMessages etc.) pump with PeekMessage, which on Windows also
+    // delivers input. Hand the modal window its pending events so Cancel can be clicked and the progress redraws.
+    // CWinApp::Run pumps its own events and is never on the stack with a modal window up, so it is unaffected.
+    if (NSWindow* modal = [NSThread isMainThread] ? [NSApp modalWindow] : nil; modal && (wRemoveMsg & PM_REMOVE)) {
+        while (NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate distantPast] inMode:NSModalPanelRunLoopMode dequeue:YES]) {
+            // Modal semantics: drop input aimed at other windows (e.g. the main frame).
+            const bool input = NSEventMaskFromType(event.type) & (NSEventMaskKeyDown | NSEventMaskKeyUp | NSEventMaskFlagsChanged | NSEventMaskScrollWheel
+                | NSEventMaskLeftMouseDown | NSEventMaskLeftMouseUp | NSEventMaskRightMouseDown | NSEventMaskRightMouseUp
+                | NSEventMaskOtherMouseDown | NSEventMaskOtherMouseUp | NSEventMaskLeftMouseDragged);
+            if (!input || event.window == modal || event.window.parentWindow == modal) [NSApp sendEvent:event];
+        }
+        [modal displayIfNeeded];
+    }
     if (s_messageQueue.empty()) return FALSE;
     if (lpMsg) *lpMsg = s_messageQueue.front();
     if (wRemoveMsg & PM_REMOVE) s_messageQueue.pop();
@@ -1734,9 +1747,11 @@ LRESULT CDialog::HandleClose(WPARAM, LPARAM) {
 
 CDialog::CDialog(LPCTSTR lpszTemplateName, CWnd* pParentWnd) {
     m_lpszTemplateName = lpszTemplateName;
+    m_pParentWnd = pParentWnd;
 }
 CDialog::CDialog(UINT nIDTemplate, CWnd* pParentWnd) {
     m_lpszTemplateName = MAKEINTRESOURCE(nIDTemplate);
+    m_pParentWnd = pParentWnd;
 }
 
 // mptrack's dialogs all use "MS Shell Dlg" 8pt, whose dialog base units at 96 DPI are 6 x 13 pixels.
@@ -1823,11 +1838,20 @@ BOOL CDialog::CreateIndirect(LPCDLGTEMPLATE lpDialogTemplate, CWnd* pParentWnd, 
 }
 
 INT_PTR CDialog::DoModal() {
-    Create(m_lpszTemplateName, nullptr);
+    // Like MFC's GetSafeOwner: a modal dialog without a parent is owned by the main window, so GetParent() is never null.
+    Create(m_lpszTemplateName, m_pParentWnd ? m_pParentWnd : AfxGetMainWnd());
     CenterWindow();
     WindowRecord* rec = GetWindowRecord(m_hWnd);
     if (rec && rec->nsWindow) {
-        [NSApp runModalForWindow:rec->nsWindow];
+        // Not runModalForWindow: it never drains the posted-message queue, and e.g. CProgressDialog starts its work with a PostMessage.
+        NSModalSession session = [NSApp beginModalSessionForWindow:rec->nsWindow];
+        while ([NSApp runModalSession:session] == NSModalResponseContinue) {
+            MSG msg{};
+            while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)) DispatchMessageW(&msg);
+            // Sleep until the next event; cross-thread PostMessage wakes this with an application-defined event.
+            [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate dateWithTimeIntervalSinceNow:0.05] inMode:NSModalPanelRunLoopMode dequeue:NO];
+        }
+        [NSApp endModalSession:session];
     }
     return m_nModalResult;
 }
@@ -2463,6 +2487,14 @@ BOOL CDocument::OnNewDocument() { DeleteContents(); SetModifiedFlag(FALSE); retu
 BOOL CDocument::OnOpenDocument(LPCTSTR lpszPathName) { SetPathName(lpszPathName); SetModifiedFlag(FALSE); return TRUE; }
 BOOL CDocument::OnSaveDocument(LPCTSTR lpszPathName) { SetModifiedFlag(FALSE); return TRUE; }
 void CDocument::OnCloseDocument() {
+    // As in MFC: take the view frames down first, so no view or active-child pointer outlives the document.
+    std::vector<CFrameWnd*> frames;
+    for (CView* view : m_viewList)
+        if (CFrameWnd* frame = view->GetParentFrame(); frame && std::find(frames.begin(), frames.end(), frame) == frames.end()) frames.push_back(frame);
+    for (CFrameWnd* frame : frames) frame->DestroyWindow();
+    for (CView* view : m_viewList) view->m_pDocument = nullptr;
+    m_viewList.clear();
+    DeleteContents();
     if (m_pDocTemplate) m_pDocTemplate->RemoveDocument(this);
     if (m_bAutoDelete) delete this;
 }
@@ -2535,7 +2567,8 @@ BOOL CDocTemplate::GetDocString(CString& rString, enum DocStringIndex index) con
     return rString.LoadString(m_nIDResource);
 }
 void CDocTemplate::CloseAllDocuments(BOOL bEndSession) {
-    for (auto* doc : m_docList) doc->OnCloseDocument();
+    // OnCloseDocument removes the document from m_docList, so iterate over a copy.
+    for (auto* doc : std::vector(m_docList)) doc->OnCloseDocument();
 }
 BOOL CDocTemplate::SaveAllModified() {
     for (auto* doc : m_docList) if (!doc->SaveModified()) return FALSE;

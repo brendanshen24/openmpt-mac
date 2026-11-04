@@ -1539,6 +1539,7 @@ class CDialog : public CWnd {
 public:
     UINT m_nIDHelp = 0;
     LPCTSTR m_lpszTemplateName = nullptr;
+    CWnd* m_pParentWnd = nullptr;
     INT_PTR m_nModalResult = 0;
     bool m_bContinuingModal = false;
 
@@ -1763,6 +1764,7 @@ public:
 
     CMDIChildWnd() = default;
     ~CMDIChildWnd() override;
+    void PostNcDestroy() override { delete this; }
 
     BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_CHILD | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
                    CWnd* pParentWnd = nullptr, CCreateContext* pContext = nullptr) override;
