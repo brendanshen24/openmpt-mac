@@ -1874,7 +1874,8 @@ void CDialog::OnCancel() {
 void CDialog::EndDialog(int nResult) {
     m_nModalResult = nResult;
     WindowRecord* rec = GetWindowRecord(m_hWnd);
-    if (rec && rec->nsWindow) {
+    // Only end our own modal session; a modeless dialog's OnOK must not stop someone else's.
+    if (rec && rec->nsWindow && [NSApp modalWindow] == rec->nsWindow) {
         [NSApp stopModalWithCode:nResult];
     }
     DestroyWindow();
@@ -3235,7 +3236,7 @@ void CPropertySheet::RemovePage(int nPage) {
 }
 void CPropertySheet::EndDialog(int nEndID) {
     m_nModalResult = nEndID;
-    if (WindowRecord* rec = GetWindowRecord(m_hWnd); rec && rec->nsWindow) [NSApp stopModalWithCode:nEndID];
+    if (WindowRecord* rec = GetWindowRecord(m_hWnd); rec && rec->nsWindow && [NSApp modalWindow] == rec->nsWindow) [NSApp stopModalWithCode:nEndID];
     DestroyWindow();
 }
 BOOL CPropertySheet::PressButton(int nButton) {
