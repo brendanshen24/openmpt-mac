@@ -1583,18 +1583,6 @@ bool RtApiCore :: probeDeviceOpen( unsigned int deviceId, StreamMode mode, unsig
     return FAILURE;
   }
 
-  // If attempting to setup a duplex stream, the bufferSize parameter
-  // MUST be the same in both directions!
-  *bufferSize = theSize;
-  if ( stream_.mode == OUTPUT && mode == INPUT && *bufferSize != stream_.bufferSize ) {
-    errorStream_ << "RtApiCore::probeDeviceOpen: system error setting buffer size for duplex stream on device (" << deviceId << ").";
-    errorText_ = errorStream_.str();
-    return FAILURE;
-  }
-
-  stream_.bufferSize = *bufferSize;
-  stream_.nBuffers = 1;
-
   // Try to set "hog" mode ... it's not clear to me this is working.
   if ( options && options->flags & RTAUDIO_HOG_DEVICE ) {
     pid_t hog_pid;
@@ -1756,6 +1744,28 @@ bool RtApiCore :: probeDeviceOpen( unsigned int deviceId, StreamMode mode, unsig
       return FAILURE;
     }
   } // done setting virtual/physical formats.
+
+  // OpenMPT: CoreAudio may round the requested frame count. Read it back after format changes.
+  dataSize = sizeof( theSize );
+  property.mSelector = kAudioDevicePropertyBufferFrameSize;
+  result = AudioObjectGetPropertyData( id, &property, 0, NULL, &dataSize, &theSize );
+  if ( result != noErr || theSize == 0 ) {
+    errorStream_ << "RtApiCore::probeDeviceOpen: could not get a valid buffer size for device (" << deviceId << ").";
+    errorText_ = errorStream_.str();
+    return FAILURE;
+  }
+
+  // If attempting to setup a duplex stream, the bufferSize parameter
+  // MUST be the same in both directions!
+  *bufferSize = theSize;
+  if ( stream_.mode == OUTPUT && mode == INPUT && *bufferSize != stream_.bufferSize ) {
+    errorStream_ << "RtApiCore::probeDeviceOpen: system error setting buffer size for duplex stream on device (" << deviceId << ").";
+    errorText_ = errorStream_.str();
+    return FAILURE;
+  }
+
+  stream_.bufferSize = *bufferSize;
+  stream_.nBuffers = 1;
 
   // Get the stream / device latency.
   UInt32 latency;
